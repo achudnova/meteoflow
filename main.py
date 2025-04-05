@@ -1,17 +1,19 @@
+import os
 import sys
 import config
 import pandas as pd
 
 from data_collection import get_weather_data
+from eda import start_eda
 
 # import numpy as np
 # from datetime import datetime, timedelta
 # import matplotlib.pyplot as plt
 # import seaborn as sns # Import seaborn for advanced plots
 
+
 def main():
-# ----- 1. Datenerfassung -----
-#-------------------------------------------------------------------------------
+    # ----- 1. Datenerfassung -----
     print("1. Datenerfassung")
     try:
         data = get_weather_data(
@@ -25,10 +27,16 @@ def main():
         print(f"Ein Fehler ist aufgetreten: {e}")
         sys.exit(1)
 
+    # ----- 2. Explorative Datenanalyse (EDA) -----
+    print("\n2. Explorative Datenanalyse (EDA)")
+    start_eda(data, plot_columns=config.EDA_PLOT_COLUMNS, save_dir=config.EDA_PLOT_DIR)
+
+
 if __name__ == "__main__":
     main()
-# 1.5. Explorative Datenanalyse (EDA)
-#-------------------------------------------------------------------------------
+
+
+
 # print("\n1.5. Explorative Datenanalyse (EDA)")
 
 # # Zeige die ersten und letzten paar Zeilen

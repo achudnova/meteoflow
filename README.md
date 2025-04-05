@@ -16,3 +16,11 @@ Args:
 Returns:
 - -> pd.DataFrame ist ein Typ-Hinweis (Type Hint) für den Rückgabewert einer Funktion in Python
 
+### eda.py
+
+> die Funktion führt eine explorative Datenanalyse dür den gegebenen DataFrame durch
+
+Args:
+- data: der Pandas-DataFrame (aus data_collection.py -> get_weather_data())
+- plot_columns: Liste der Spaltennamen für die Zeitreihenplots
+- save_dir: das Verzeichnis, in dem die Plots gespeichert werden sollen

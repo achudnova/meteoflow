@@ -3,7 +3,7 @@ name: Daily Weather Prediction Update
 on:
   schedule:
     # Läuft jeden Tag um 05:00 UTC (passe die Zeit an)
-    - cron: '1 7 * * *'
+    - cron: '0 3 * * *'
   workflow_dispatch: # Erlaubt manuelles Starten über die Actions-UI
 
 jobs:

@@ -9,6 +9,8 @@ from data_preprocessing import preprocess_data
 from feature_engineering import engineer_feautures
 from model_training import train_models
 from model_manager import load_model
+from model_evaluation import evaluate_model
+
 
 def main():
     # ----- 1. Datenerfassung -----
@@ -85,28 +87,53 @@ def main():
 
     print(X_train.shape)
     print(f"Split-Datum: {split_date.date()}")
-    print(f"Trainingsdaten: {X_train.shape[0]} Samples ({X_train.index.min().date()} bis {X_train.index.max().date()})")
-    print(f"Testdaten: {X_test.shape[0]} Samples ({X_test.index.min().date()} bis {X_test.index.max().date()})")
+    print(
+        f"Trainingsdaten: {X_train.shape[0]} Samples ({X_train.index.min().date()} bis {X_train.index.max().date()})"
+    )
+    print(
+        f"Testdaten: {X_test.shape[0]} Samples ({X_test.index.min().date()} bis {X_test.index.max().date()})"
+    )
     print(f"Anzahl Features: {X_train.shape[1]}")
-    print(f"Zielvariablen: {target_cols_present}") # Zeige die tatsächlichen Zielvariablen an
-    
-     # Überprüfung des Split-Verhältnisses
+    print(
+        f"Zielvariablen: {target_cols_present}"
+    )  # Zeige die tatsächlichen Zielvariablen an
+
+    # Überprüfung des Split-Verhältnisses
     total_samples_after_engineering = X_train.shape[0] + X_test.shape[0]
 
     train_percentage = (X_train.shape[0] / total_samples_after_engineering) * 100
     test_percentage = (X_test.shape[0] / total_samples_after_engineering) * 100
 
     print(f"\nÜberprüfung des Split-Verhältnisses:")
-    print(f"  Gesamte Samples nach Feature Engineering: {total_samples_after_engineering}")
+    print(
+        f"  Gesamte Samples nach Feature Engineering: {total_samples_after_engineering}"
+    )
     print(f"  Trainings-Anteil: {train_percentage:.2f}%")
     print(f"  Test-Anteil:      {test_percentage:.2f}%")
-    
+
     print("Train/Test Split abgeschlossen.")
-    
+
     # ----- 6. Modelltraining -----
     print("\n6. Modelltraining")
-    train_models(X_train, y_train, config.RF_PARAMETER, config.XGB_PARAMETER, config.MODEL_SAVE_DIR)
-    
+    trained_models = train_models(
+        X_train,
+        y_train,
+        config.RF_PARAMETER,
+        config.XGB_PARAMETER,
+        config.MODEL_SAVE_DIR,
+    )
+
+    # ----- 7. Modellbewertung -----
+    print("\n7. Modellbewertung")
+    evaluate_model(
+        models=trained_models,
+        X_test=X_test,
+        y_test=y_test,
+        target_cols=target_cols_present,
+        plot_target_col=config.EVAL_PLOT_TARGET_COLUMN,
+    )
+
+
 if __name__ == "__main__":
     main()
 

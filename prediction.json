@@ -2,7 +2,7 @@
   "forecast_date": "2025-04-07",
   "rf_temp_c": 4.105856955520113,
   "rf_wspd_kmh": 15.117680982857301,
-  "xgb_temp_c": null,
-  "xgb_wspd_kmh": null,
-  "generated_at": "2025-04-06T16:57:17.605184"
+  "xgb_temp_c": 3.3604514598846436,
+  "xgb_wspd_kmh": 13.197261810302734,
+  "generated_at": "2025-04-06T17:10:54.626041"
 }

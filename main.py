@@ -5,12 +5,7 @@ import pandas as pd
 
 from data_collection import get_weather_data
 from eda import start_eda
-
-# import numpy as np
-# from datetime import datetime, timedelta
-# import matplotlib.pyplot as plt
-# import seaborn as sns # Import seaborn for advanced plots
-
+from data_preprocessing import preprocess_data
 
 def main():
     # ----- 1. Datenerfassung -----
@@ -31,91 +26,13 @@ def main():
     print("\n2. Explorative Datenanalyse (EDA)")
     start_eda(data, plot_columns=config.EDA_PLOT_COLUMNS, save_dir=config.EDA_PLOT_DIR)
 
+    # ----- 3. Datenvorverarbeitung -----
+    print("\n3. Datenvorverarbeitung")
+    preprocess_data(data)
+
 
 if __name__ == "__main__":
     main()
-
-
-
-# print("\n1.5. Explorative Datenanalyse (EDA)")
-
-# # Zeige die ersten und letzten paar Zeilen
-# print("\nErste 5 Zeilen der ausgewählten Daten:")
-# print(data.head())
-# print("\nLetzte 5 Zeilen der ausgewählten Daten:")
-# print(data.tail())
-
-# # Grundlegende Informationen über den DataFrame
-# print("\nDateninformationen (Typen, Nicht-Null-Werte):")
-# data.info()
-
-# # Deskriptive Statistiken für numerische Spalten
-# print("\nDeskriptive Statistiken:")
-# print(data.describe())
-
-# # Überprüfung auf fehlende Werte (vor der Vorverarbeitung)
-# print("\nFehlende Werte pro Spalte (vor der Vorverarbeitung):")
-# missing_values = data.isnull().sum()
-# print(missing_values[missing_values > 0]) # Zeige nur Spalten mit fehlenden Werten
-
-# # Visualisierung der fehlenden Werte (Mustererkennung)
-# if data.isnull().sum().sum() > 0: # Nur plotten, wenn es fehlende Werte gibt
-#     plt.figure(figsize=(10, 6))
-#     sns.heatmap(data.isnull(), cbar=False, cmap='viridis')
-#     plt.title('Muster der fehlenden Werte')
-#     plt.show()
-# else:
-#     print("\nKeine fehlenden Werte in den ausgewählten Spalten gefunden.")
-
-# # Verteilung der einzelnen Variablen (Histogramme)
-# print("\nVisualisierung der Verteilungen der Variablen:")
-# data.hist(bins=30, figsize=(15, 10), layout=(-1, 3)) # Layout anpassen je nach Spaltenanzahl
-# plt.suptitle('Histogramme der Wettervariablen')
-# plt.tight_layout(rect=[0, 0.03, 1, 0.95]) # Platz für den Suptitel lassen
-# plt.show()
-
-# # Zeitreihen-Plots für Schlüsselvariablen
-# print("\nVisualisierung der Zeitreihen:")
-# plot_cols = ['tavg', 'wspd', 'prcp', 'pres'] # Wähle relevante Spalten zum Plotten
-# num_plots = len(plot_cols)
-# plt.figure(figsize=(15, 3 * num_plots))
-# for i, col in enumerate(plot_cols):
-#     if col in data.columns: # Nur plotten, wenn Spalte vorhanden ist
-#         plt.subplot(num_plots, 1, i + 1)
-#         plt.plot(data.index, data[col], label=col)
-#         plt.title(f'Zeitlicher Verlauf von {col}', fontsize=10)
-#         plt.legend(loc='upper right')
-#         plt.grid(True, linestyle='--', alpha=0.6)
-# plt.xlabel('Datum')
-# plt.tight_layout()
-# plt.show()
-
-# # Korrelationsmatrix (Beziehungen zwischen Variablen)
-# print("\nVisualisierung der Korrelationen zwischen Variablen:")
-# plt.figure(figsize=(10, 8))
-# correlation_matrix = data.corr()
-# sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt=".2f", linewidths=.5)
-# plt.title('Korrelationsmatrix der Wettervariablen')
-# plt.show()
-# print("\nKorrelationsmatrix:")
-# print(correlation_matrix)
-
-# # Boxplots zur Erkennung von Ausreißern (optional, aber nützlich)
-# print("\nBoxplots zur Visualisierung von Verteilungen und Ausreißern:")
-# plt.figure(figsize=(15, 8))
-# num_cols = len(data.columns)
-# for i, col in enumerate(data.columns):
-#     plt.subplot(2, (num_cols + 1) // 2, i + 1) # Erstellt ein Grid mit 2 Zeilen
-#     sns.boxplot(y=data[col])
-#     plt.title(col, fontsize=10)
-#     plt.ylabel('') # Y-Label entfernen für Kompaktheit
-# plt.suptitle('Boxplots der Wettervariablen')
-# plt.tight_layout(rect=[0, 0.03, 1, 0.95])
-# plt.show()
-
-# print("\nEDA abgeschlossen.")
-
-# # --- Ab hier beginnt der ursprüngliche Ablauf ---
 
 # # 2. Datenvorverarbeitung
 # #-------------------------------------------------------------------------------

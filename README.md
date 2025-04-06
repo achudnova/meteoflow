@@ -24,3 +24,10 @@ Args:
 - data: der Pandas-DataFrame (aus data_collection.py -> get_weather_data())
 - plot_columns: Liste der Spaltennamen für die Zeitreihenplots
 - save_dir: das Verzeichnis, in dem die Plots gespeichert werden sollen
+
+### data_preprocessing.py
+
+> die Funktion bereinigt die Daten und gibt den DataFrame zurück
+
+Args:
+- data: Pandas DataFrame mit den bereinigten Daten

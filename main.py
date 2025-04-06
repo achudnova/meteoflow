@@ -6,6 +6,7 @@ import pandas as pd
 from data_collection import get_weather_data
 from eda import start_eda
 from data_preprocessing import preprocess_data
+from feature_engineering import engineer_feautures
 
 def main():
     # ----- 1. Datenerfassung -----
@@ -29,6 +30,19 @@ def main():
     # ----- 3. Datenvorverarbeitung -----
     print("\n3. Datenvorverarbeitung")
     preprocess_data(data)
+    
+    # ----- 4. Feature Engineering -----
+    print("\n4. Feature Engineering")
+    data = engineer_feautures(
+        data=data,
+        target_cols=config.TARGET_COLUMNS,
+        target_base_cols=config.ORIGINAL_TARGET_BASE_COLUMNS,
+        lag_days=config.LAG_DAYS
+    )
+    
+    if data is None or data.empty:
+        print("Nach dem Feature Engineering sind keine Daten mehr verfügbar.")
+        sys.exit(1)
 
 
 if __name__ == "__main__":

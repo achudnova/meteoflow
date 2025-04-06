@@ -31,3 +31,17 @@ Args:
 
 Args:
 - data: Pandas DataFrame mit den bereinigten Daten
+
+### feature_engineering.py
+
+> die Funktion erstellt Zielvariablen, Lag-Features und zeitbasierte Features.
+
+Args:
+- data: vorverarbeiteter Pandas DataFrame
+- target_cols: Liste der Namen für die Zielvariablen (`tavg_target`, `wspd_target`)
+- target_base_cols: Liste der Originalspalten, aus denen Targets erstellt werden (`tavg`, `wspd`)
+- lag_days: Anzahl der Tage für Lag-Features
+  
+Returns:
+- Pandas DataFrame mit den neuen Features
+- oder None, wenn nicht genügend Daten für Lags vorhanden sind

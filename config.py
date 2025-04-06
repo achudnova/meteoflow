@@ -22,7 +22,7 @@ ESSENTIAL_COLS = ['tavg', 'wspd']
 
 # ----- Feature Engineering -----
 TARGET_COLUMNS = ['tavg_target', 'wspd_target']
-ORIGINAL_TARGET_BASE_COLS = ['tavg', 'wspd'] # Originalspalten, die zu Targets werden
+ORIGINAL_TARGET_BASE_COLUMNS = ['tavg', 'wspd'] # Originalspalten, die zu Targets werden
 LAG_DAYS = 3 # Anzahl der Lag-Tage
 
 # ----- Modellparameter -----

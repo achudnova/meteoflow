@@ -16,7 +16,7 @@ def save_plot(filename: str, save_dir: str):
         filepath = os.path.join(save_dir, filename)
         
         plt.savefig(filepath, bbox_inches='tight')
-        print(f"Plot erfolgreich gespeichert: {filepath}")
+        print(f"Plot erfolgreich gespeichert: {filepath}\n")
     
     except OSError as e:
         print(f"Fehler: konnte Verzeichnis '{save_dir}' nicht erstellen oder darauf zugreifen: {e}", file=sys.stderr)

@@ -72,7 +72,7 @@ def predict_next_day(
             if prediction.ndim == 1:
                 prediction = prediction.reshape(1, -1)
 
-            print(f"--- {model_name} ---")
+            print(f"\n--- {model_name} ---")
             if tavg_idx != -1 and tavg_idx < prediction.shape[1]:
                 print(f"  Vorhergesagte Temperatur: {prediction[0, tavg_idx]:.1f} °C")
             else:

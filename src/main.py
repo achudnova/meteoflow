@@ -6,7 +6,8 @@ import pandas as pd
 from data_collection import get_weather_data
 from eda import start_eda
 from data_preprocessing import preprocess_data
-from feature_engineering import engineer_feautures
+from feature_engineering import engineer_features
+from data_splitting import split_data
 from model_training import train_models
 from model_evaluation import evaluate_model
 from prediction import predict_next_day
@@ -18,10 +19,10 @@ from rich.panel import Panel
 console = Console()
 
 def main():
-    console.rule("[bold blue]⛅ Wettervorhersage für Berlin ⛅[/bold blue]")
+    console.rule("[bold purple4]⛅ Wettervorhersage für Berlin ⛅[/bold purple4]")
     
     # ----- 1. Datenerfassung -----
-    console.rule("\n[cyan]1. Datenerfassung[/cyan]")
+    console.rule("[orange1]1. Datenerfassung[/orange1]")
     try:
         data = get_weather_data(
             location=config.LOCATION,
@@ -35,17 +36,20 @@ def main():
         sys.exit(1)
 
     # ----- 2. Explorative Datenanalyse (EDA) -----
-    console.rule("[cyan]1.5 Explorative Datenanalyse (EDA)[/cyan]")
+    console.rule("[orange1]1.5 Explorative Datenanalyse (EDA)[/orange1]")
     start_eda(data, plot_columns=config.EDA_PLOT_COLUMNS, save_dir=config.EDA_PLOT_DIR)
 
     # ----- 3. Datenvorverarbeitung -----
-    console.rule("[cyan]2. Datenvorverarbeitung[/cyan]")
-    preprocess_data(data)
+    console.rule("[orange1]2. Datenvorverarbeitung[/orange1]")
+    data_processed = preprocess_data(data)
+    if data_processed is None: # Prüfen ob erfolgreich
+        console.print("[red] Fehler während der Datenvorverarbeitung, Abbruch! [/red]")
+        sys.exit(1)
 
     # ----- 4. Feature Engineering -----
-    console.rule("[cyan]3. Feature Engineering[/cyan]")
-    data_featured = engineer_feautures(
-        data=data,
+    console.rule("[orange1]3. Feature Engineering[/orange1]")
+    data_featured = engineer_features(
+        data=data_processed,
         target_cols=config.TARGET_COLUMNS,
         target_base_cols=config.ORIGINAL_TARGET_BASE_COLUMNS,
         lag_days=config.LAG_DAYS,
@@ -56,72 +60,19 @@ def main():
         sys.exit(1)
 
     # ----- 5. Train/Test Split -----
-    console.rule("[cyan]4. Train/Test Split[/cyan]")
-    # Feature Spalten definieren
-    features_cols = [
-        col
-        for col in data_featured.columns
-        if col not in config.TARGET_COLUMNS + config.ORIGINAL_TARGET_BASE_COLUMNS
-    ]
-    target_cols_present = [
-        col for col in config.TARGET_COLUMNS if col in data_featured.columns
-    ]  # Nur die tatsächlich erstellten Targets
-
-    if not target_cols_present:
-        console.print("[red] Fehler: keine der Zielvariablen konnte erstellt werden. [/red]")
-        sys.exit(1)
-    if not features_cols:
-        print("[red] Fehler: keine Feature-Spalten gefunden. [/red]")
-        sys.exit(1)
-
-    X = data_featured[features_cols]
-    y = data_featured[target_cols_present]  # nur existierende Targets verwenden
-
-    if len(data_featured) <= config.TEST_PERIOD_DAYS:
-        print(
-            f"[red] Nicht genügend Daten ({len(data_featured)} Zeilen) für einen sinnvollen Train/Test-Split mit {config.TEST_PERIOD_DAYS} Testtagen vorhanden. [/red]"
+    console.rule("[orange1]4. Train/Test Split[/orange1]")
+    try:
+        X_train, X_test, y_train, y_test, features_cols, target_cols_present, split_date, train_percentage, test_percentage = split_data(
+            data_featured, console
         )
-        print("Workflow wird abgebrochen.")
+        
+    except Exception as e:
+        console.print(f"[red] Fehler während des Train/Test Splits: {e} [/red]")
         sys.exit(1)
 
-    split_index = len(data_featured) - config.TEST_PERIOD_DAYS
-    split_date = data_featured.index[split_index]
-
-    X_train = X[X.index < split_date]
-    X_test = X[X.index >= split_date]
-    y_train = y[y.index < split_date]
-    y_test = y[y.index >= split_date]
-
-    print(X_train.shape)
-    print(f"Split-Datum: {split_date.date()}")
-    print(
-        f"Trainingsdaten: {X_train.shape[0]} Samples ({X_train.index.min().date()} bis {X_train.index.max().date()})"
-    )
-    print(
-        f"Testdaten: {X_test.shape[0]} Samples ({X_test.index.min().date()} bis {X_test.index.max().date()})"
-    )
-    print(f"Anzahl Features: {X_train.shape[1]}")
-    print(
-        f"Zielvariablen: {target_cols_present}"
-    )  # Zeige die tatsächlichen Zielvariablen an
-
-    # Überprüfung des Split-Verhältnisses
-    total_samples_after_engineering = X_train.shape[0] + X_test.shape[0]
-
-    train_percentage = (X_train.shape[0] / total_samples_after_engineering) * 100
-    test_percentage = (X_test.shape[0] / total_samples_after_engineering) * 100
-
-    print(f"\nÜberprüfung des Split-Verhältnisses:")
-    print(
-        f"  Gesamte Samples nach Feature Engineering: {total_samples_after_engineering}"
-    )
-    print(f"  Trainings-Anteil: {train_percentage:.2f}%")
-    print(f"  Test-Anteil:      {test_percentage:.2f}%")
-
-    console.print("[green] Train/Test Split abgeschlossen. [/green]")
 
     # ----- 6. Modelltraining -----
-    console.rule("[cyan]5. Modelltraining[/cyan]")
+    console.rule("[orange1]5. Modelltraining[/orange1]")
     trained_models = train_models(
         X_train,
         y_train,
@@ -131,7 +82,7 @@ def main():
     )
 
     # ----- 7. Modellbewertung -----
-    console.rule("[cyan]6. Modellbewertung[/cyan]")
+    console.rule("[orange1]6. Modellbewertung[/orange1]")
     evaluate_model(
         models=trained_models,
         X_test=X_test,
@@ -141,7 +92,7 @@ def main():
     )
 
     # ----- 8. Vorhersage für den nächsten Tag -----
-    console.rule("[cyan]7. Vorhersage für den nächsten Tag[/cyan]")
+    console.rule("[reverse green]7. Vorhersage für den nächsten Tag[/reverse green]")
     last_available_data_row = data_featured.iloc[-1:]
     predict_next_day(
         models=trained_models,
@@ -150,7 +101,7 @@ def main():
         target_cols=target_cols_present,  # Die Liste der Ziel-Namen
     )
 
-    console.rule("[bold blue]🎉 Wettervorhersage Workflow Abgeschlossen 🎉[/bold blue]")
+    console.print("\n[bold blue]🎉 Wettervorhersage Workflow Abgeschlossen 🎉[/bold blue]")
 
 
 if __name__ == "__main__":

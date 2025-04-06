@@ -1,6 +1,6 @@
 import pandas as pd
 
-def engineer_feautures(data: pd.DataFrame, target_cols: list, target_base_cols: list, lag_days: int) -> pd.DataFrame:
+def engineer_features(data: pd.DataFrame, target_cols: list, target_base_cols: list, lag_days: int) -> pd.DataFrame:
     data = data.copy()
     
     # sicherstellen, dass Zielspalten und Basisspalten übereinstimmen

@@ -94,6 +94,14 @@ def main():
     # ----- 8. Vorhersage für den nächsten Tag -----
     console.rule("[reverse green]7. Vorhersage für den nächsten Tag[/reverse green]")
     last_available_data_row = data_featured.iloc[-1:]
+    
+    console.print("\n[bold yellow]--- DEBUG: Features für Vorhersage aus main.py ---[/bold yellow]")
+    console.print(f"Letzter Datenpunkt Index (main.py): {last_available_data_row.index[0]}")
+    
+    console.print("Feature-Werte (main.py):")
+    console.print(last_available_data_row[features_cols].iloc[0].to_dict()) # Zeige Werte als Dictionary
+    console.print("[bold yellow]-----------------------------------------------------[/bold yellow]\n")
+    
     predict_next_day(
         models=trained_models,
         last_available_data_row=last_available_data_row,

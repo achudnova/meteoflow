@@ -124,6 +124,26 @@ def run_prediction_and_save():
         console.print("[red]FEHLER: Features konnten nicht erstellt werden. Abbruch.[/red]")
         sys.exit(1)
 
+    # ++++++++++++++++++++++++++++++++++++++++++++++++++++
+    # HIER DEN DEBUG-CODE EINFÜGEN:
+    # ++++++++++++++++++++++++++++++++++++++++++++++++++++
+    console.print("\n[bold yellow]-- DEBUG: Features für Vorhersage aus Action --[/bold yellow]")
+    console.print(f"Vorhersagedatum (Action): {prediction_date_target}")
+    # Finde den Index der letzten Zeile (entspricht dem Vortag)
+    last_feature_date = features_for_prediction.index.max().date()
+    console.print(f"Letzter Datenpunkt Index (Action): {last_feature_date}")
+    # Drucke die tatsächlichen Feature-Werte dieser Zeile
+    console.print("Feature-Werte (Action):")
+    try:
+        # Zeige Werte als Dictionary für bessere Lesbarkeit
+        console.print(features_for_prediction.iloc[0].to_dict())
+    except Exception as e:
+        console.print(f"[red]Fehler beim Anzeigen der Feature-Werte: {e}[/red]")
+    console.print("[bold yellow]-------------------------------------------------[/bold yellow]\n")
+    # ++++++++++++++++++++++++++++++++++++++++++++++++++++
+    # ENDE DEBUG-CODE
+    # ++++++++++++++++++++++++++++++++++++++++++++++++++++
+
     # --- Vorhersage machen (bleibt gleich, aber basiert auf Vortages-Features) ---
     console.print("\n[cyan]Mache Vorhersage für heute...[/cyan]")
     predictions_output = {}

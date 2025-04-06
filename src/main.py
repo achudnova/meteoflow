@@ -12,10 +12,16 @@ from model_evaluation import evaluate_model
 from prediction import predict_next_day
 # from .model_manager import load_model
 
+from rich.console import Console
+from rich.panel import Panel
+
+console = Console()
 
 def main():
+    console.rule("[bold blue]⛅ Wettervorhersage für Berlin ⛅[/bold blue]")
+    
     # ----- 1. Datenerfassung -----
-    print("1. Datenerfassung")
+    console.rule("\n[cyan]1. Datenerfassung[/cyan]")
     try:
         data = get_weather_data(
             location=config.LOCATION,
@@ -25,19 +31,19 @@ def main():
             essential_columns=config.ESSENTIAL_COLS,
         )
     except Exception as e:
-        print(f"Ein Fehler ist aufgetreten: {e}")
+        console.print(f"[red] Ein Fehler ist aufgetreten: [/red] {e}")
         sys.exit(1)
 
     # ----- 2. Explorative Datenanalyse (EDA) -----
-    print("\n2. Explorative Datenanalyse (EDA)")
+    console.rule("[cyan]1.5 Explorative Datenanalyse (EDA)[/cyan]")
     start_eda(data, plot_columns=config.EDA_PLOT_COLUMNS, save_dir=config.EDA_PLOT_DIR)
 
     # ----- 3. Datenvorverarbeitung -----
-    print("\n3. Datenvorverarbeitung")
+    console.rule("[cyan]2. Datenvorverarbeitung[/cyan]")
     preprocess_data(data)
 
     # ----- 4. Feature Engineering -----
-    print("\n4. Feature Engineering")
+    console.rule("[cyan]3. Feature Engineering[/cyan]")
     data_featured = engineer_feautures(
         data=data,
         target_cols=config.TARGET_COLUMNS,
@@ -46,11 +52,11 @@ def main():
     )
 
     if data is None or data.empty:
-        print("Nach dem Feature Engineering sind keine Daten mehr verfügbar.")
+        console.print(f"[red] Nach dem Feature Engineering sind keine Daten mehr verfügbar [/red]")
         sys.exit(1)
 
     # ----- 5. Train/Test Split -----
-    print("\n5. Train/Test Split")
+    console.rule("[cyan]4. Train/Test Split[/cyan]")
     # Feature Spalten definieren
     features_cols = [
         col
@@ -62,10 +68,10 @@ def main():
     ]  # Nur die tatsächlich erstellten Targets
 
     if not target_cols_present:
-        print("Fehler: keine der Zielvariablen konnte erstellt werden.")
+        console.print("[red] Fehler: keine der Zielvariablen konnte erstellt werden. [/red]")
         sys.exit(1)
     if not features_cols:
-        print("Fehler: keine Feature-Spalten gefunden.")
+        print("[red] Fehler: keine Feature-Spalten gefunden. [/red]")
         sys.exit(1)
 
     X = data_featured[features_cols]
@@ -73,7 +79,7 @@ def main():
 
     if len(data_featured) <= config.TEST_PERIOD_DAYS:
         print(
-            f"Nicht genügend Daten ({len(data_featured)} Zeilen) für einen sinnvollen Train/Test-Split mit {config.TEST_PERIOD_DAYS} Testtagen vorhanden."
+            f"[red] Nicht genügend Daten ({len(data_featured)} Zeilen) für einen sinnvollen Train/Test-Split mit {config.TEST_PERIOD_DAYS} Testtagen vorhanden. [/red]"
         )
         print("Workflow wird abgebrochen.")
         sys.exit(1)
@@ -112,10 +118,10 @@ def main():
     print(f"  Trainings-Anteil: {train_percentage:.2f}%")
     print(f"  Test-Anteil:      {test_percentage:.2f}%")
 
-    print("Train/Test Split abgeschlossen.")
+    console.print("[green] Train/Test Split abgeschlossen. [/green]")
 
     # ----- 6. Modelltraining -----
-    print("\n6. Modelltraining")
+    console.rule("[cyan]5. Modelltraining[/cyan]")
     trained_models = train_models(
         X_train,
         y_train,
@@ -125,7 +131,7 @@ def main():
     )
 
     # ----- 7. Modellbewertung -----
-    print("\n7. Modellbewertung")
+    console.rule("[cyan]6. Modellbewertung[/cyan]")
     evaluate_model(
         models=trained_models,
         X_test=X_test,
@@ -135,7 +141,7 @@ def main():
     )
 
     # ----- 8. Vorhersage für den nächsten Tag -----
-    print("\n8. Vorhersage für den nächsten Tag")
+    console.rule("[cyan]7. Vorhersage für den nächsten Tag[/cyan]")
     last_available_data_row = data_featured.iloc[-1:]
     predict_next_day(
         models=trained_models,
@@ -144,7 +150,7 @@ def main():
         target_cols=target_cols_present,  # Die Liste der Ziel-Namen
     )
 
-    print("\nWettervorhersage-Workflow abgeschlossen.")
+    console.rule("[bold blue]🎉 Wettervorhersage Workflow Abgeschlossen 🎉[/bold blue]")
 
 
 if __name__ == "__main__":

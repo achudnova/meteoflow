@@ -1,12 +1,12 @@
-# src/update_prediction_data.py
 import pandas as pd
 import numpy as np
 import sys
 import os
 import json
-from datetime import datetime, timedelta, date # date hinzufügen
+# Importiere datetime UND date
+from datetime import datetime, timedelta, date
 
-# --- Konfiguration und nötige Imports aus deinem Projekt ---
+# --- Konfiguration und nötige Imports ---
 import config
 from data_collection import get_weather_data
 from feature_engineering import engineer_features
@@ -19,57 +19,64 @@ def get_features_for_date(target_prediction_date: date):
     """Holt Daten bis zum Vortag und erstellt Features für die Vorhersage des target_prediction_date."""
     console.print(f"[cyan]Hole Daten für Vorhersage vom {target_prediction_date}...[/cyan]")
 
-    # Daten nur bis zum ENDE DES VORTAGES holen!
-    fetch_end_date = target_prediction_date # datetime(target_prediction_date.year, target_prediction_date.month, target_prediction_date.day)
-    fetch_start_date = fetch_end_date - timedelta(days=config.LAG_DAYS + 5)
+    # --- DATUM IN DATETIME UMWANDELN ---
+    # Setze Start und Ende auf Mitternacht des jeweiligen Tages
+    # Ende ist Mitternacht des Zieltages (d.h. Ende des Vortages)
+    end_dt = datetime(target_prediction_date.year, target_prediction_date.month, target_prediction_date.day, 0, 0, 0)
+    # Start ist entsprechend zurückdatiert
+    start_dt = end_dt - timedelta(days=config.LAG_DAYS + 5)
 
-    console.print(f"   Hole Rohdaten von {fetch_start_date.strftime('%Y-%m-%d')} bis {(fetch_end_date - timedelta(days=1)).strftime('%Y-%m-%d')}")
+    # Das Enddatum für den get_weather_data Aufruf ist der Vortag um 23:59:59
+    # (Meteostat erwartet Start und Ende inklusiv)
+    fetch_end_dt_inclusive = end_dt - timedelta(seconds=1) # 23:59:59 des Vortages
+
+    console.print(f"   Hole Rohdaten von {start_dt.strftime('%Y-%m-%d')} bis {fetch_end_dt_inclusive.strftime('%Y-%m-%d')}")
 
     try:
+        # --- ÜBERGIB DATETIME-OBJEKTE ---
         data_raw = get_weather_data(
             location=config.LOCATION,
-            start_date=fetch_start_date,
-            end_date=fetch_end_date - timedelta(days=1), # Nur bis Ende des Vortages!
+            start_date=start_dt,                  # datetime übergeben
+            end_date=fetch_end_dt_inclusive,      # datetime übergeben
             required_columns=config.REQUIRED_COLUMNS,
             essential_columns=config.ESSENTIAL_COLS
+            # Console hier nicht übergeben, wenn get_weather_data es nicht erwartet
         )
+        # --- Rest der Funktion bleibt gleich ---
         if data_raw.empty:
              console.print("[red]   FEHLER: Keine Rohdaten für den benötigten Zeitraum erhalten.[/red]")
              return None, None
         console.print("[green]   ✔️ Rohdaten geholt.[/green]")
 
-        # --- Minimales Preprocessing ---
         data_raw.ffill(inplace=True)
         data_raw.bfill(inplace=True)
         if data_raw.isnull().sum().sum() > 0:
-             console.print("[yellow]   Warnung: Immer noch NaNs nach ffill/bfill in Rohdaten.[/yellow]")
              data_raw.dropna(inplace=True)
              if data_raw.empty:
                   console.print("[red]   FEHLER: Keine Daten mehr nach dropna.[/red]")
                   return None, None
 
-        # --- Feature Engineering ---
         data_featured = engineer_features(
             data=data_raw,
             target_cols=config.TARGET_COLUMNS,
             target_base_cols=config.ORIGINAL_TARGET_BASE_COLUMNS,
             lag_days=config.LAG_DAYS
+            # Console hier nicht übergeben, wenn engineer_features es nicht erwartet
         )
 
         if data_featured is None or data_featured.empty:
             console.print("[red]   FEHLER: Keine Features nach Engineering.[/red]")
             return None, None
 
-        # Extrahiere die LETZTE Zeile (entspricht dem Vortag der Vorhersage)
         last_row = data_featured.iloc[-1:]
-
-        # --- Stelle sicher, dass die letzte Zeile wirklich der Vortag ist ---
         last_data_date = last_row.index.max().date()
         expected_last_date = target_prediction_date - timedelta(days=1)
         if last_data_date != expected_last_date:
-             console.print(f"[red]   FEHLER: Letzter Feature-Tag ({last_data_date}) entspricht nicht dem erwarteten Vortag ({expected_last_date}). Datenlücke?[/red]")
-             return None, None
-        console.print(f"   Features basieren auf Daten vom [cyan]{last_data_date}[/cyan].")
+             console.print(f"[red]   FEHLER: Letzter Feature-Tag ({last_data_date}) != erwarteter Vortag ({expected_last_date}). Datenlücke?[/red]")
+             # Hier vielleicht nicht abbrechen, sondern nur warnen und weitermachen?
+             # return None, None # Entscheidung treffen
+             console.print(f"[yellow]   WARNUNG: Letzter Feature-Tag ({last_data_date}) != erwarteter Vortag ({expected_last_date}). Versuche trotzdem Vorhersage.[/yellow]")
+
 
         features_cols = [col for col in data_featured.columns if col not in config.TARGET_COLUMNS + config.ORIGINAL_TARGET_BASE_COLUMNS]
         features_for_prediction = last_row[features_cols]
@@ -79,12 +86,13 @@ def get_features_for_date(target_prediction_date: date):
             console.print(features_for_prediction.isnull().sum())
             return None, None
 
+        console.print(f"   Features basieren auf Daten vom [cyan]{last_data_date}[/cyan].")
         console.print("[green]   ✔️ Features für Vorhersage extrahiert.[/green]")
         return features_for_prediction, features_cols
 
     except Exception as e:
         console.print(f"[red]   FEHLER beim Holen/Erstellen der Features: {e}[/red]")
-        console.print_exception(show_locals=False) # Zeige Traceback
+        console.print_exception(show_locals=False)
         return None, None
 
 

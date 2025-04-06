@@ -198,6 +198,8 @@ def run_prediction_and_save():
     console.print("[green]   ✔️ Vorhersage-Loop abgeschlossen.[/green]")
 
     # --- Daten für JSON aufbereiten ---
+    json_forecast_date = last_feature_date + timedelta(days=1)
+    console.print(f"Setze 'forecast_date' im JSON auf: [bold green]{json_forecast_date}[/bold green]")
     output_data = {
         # Verwende das tatsächliche Vorhersagedatum (Tag nach den Features)
         "forecast_date": actual_prediction_target_date.strftime("%Y-%m-%d"),

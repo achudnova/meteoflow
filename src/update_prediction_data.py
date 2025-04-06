@@ -99,8 +99,8 @@ def run_prediction_and_save():
 
     # --- Modelle laden (bleibt gleich) ---
     console.print("\n[cyan]Lade Modelle...[/cyan]")
-    rf_model_path = os.path.join(config.MODEL_SAVE_DIR, 'random_forest_model.joblib')
-    xgb_model_path = os.path.join(config.MODEL_SAVE_DIR, 'xgboost_model.joblib')
+    rf_model_path = os.path.join(config.MODEL_SAVE_DIR, 'rf_model.joblib')
+    xgb_model_path = os.path.join(config.MODEL_SAVE_DIR, 'xgb_model.joblib')
     rf_model = load_model(rf_model_path, console)
     xgb_model = load_model(xgb_model_path, console)
     if rf_model is None or xgb_model is None:

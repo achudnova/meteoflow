@@ -8,6 +8,7 @@ from eda import start_eda
 from data_preprocessing import preprocess_data
 from feature_engineering import engineer_feautures
 
+
 def main():
     # ----- 1. Datenerfassung -----
     print("1. Datenerfassung")
@@ -30,77 +31,80 @@ def main():
     # ----- 3. Datenvorverarbeitung -----
     print("\n3. Datenvorverarbeitung")
     preprocess_data(data)
-    
+
     # ----- 4. Feature Engineering -----
     print("\n4. Feature Engineering")
-    data = engineer_feautures(
+    data_featured = engineer_feautures(
         data=data,
         target_cols=config.TARGET_COLUMNS,
         target_base_cols=config.ORIGINAL_TARGET_BASE_COLUMNS,
-        lag_days=config.LAG_DAYS
+        lag_days=config.LAG_DAYS,
     )
-    
+
     if data is None or data.empty:
         print("Nach dem Feature Engineering sind keine Daten mehr verfügbar.")
         sys.exit(1)
 
+    # ----- 5. Train/Test Split -----
+    print("\n5. Train/Test Split")
+    # Feature Spalten definieren
+    features_cols = [
+        col
+        for col in data_featured.columns
+        if col not in config.TARGET_COLUMNS + config.ORIGINAL_TARGET_BASE_COLUMNS
+    ]
+    target_cols_present = [
+        col for col in config.TARGET_COLUMNS if col in data_featured.columns
+    ]  # Nur die tatsächlich erstellten Targets
+
+    if not target_cols_present:
+        print("Fehler: keine der Zielvariablen konnte erstellt werden.")
+        sys.exit(1)
+    if not features_cols:
+        print("Fehler: keine Feature-Spalten gefunden.")
+        sys.exit(1)
+
+    X = data_featured[features_cols]
+    y = data_featured[target_cols_present]  # nur existierende Targets verwenden
+
+    if len(data_featured) <= config.TEST_PERIOD_DAYS:
+        print(
+            f"Nicht genügend Daten ({len(data_featured)} Zeilen) für einen sinnvollen Train/Test-Split mit {config.TEST_PERIOD_DAYS} Testtagen vorhanden."
+        )
+        print("Workflow wird abgebrochen.")
+        sys.exit(1)
+
+    split_index = len(data_featured) - config.TEST_PERIOD_DAYS
+    split_date = data_featured.index[split_index]
+
+    X_train = X[X.index < split_date]
+    X_test = X[X.index >= split_date]
+    y_train = y[y.index < split_date]
+    y_test = y[y.index >= split_date]
+
+    print(X_train.shape)
+    print(f"Split-Datum: {split_date.date()}")
+    print(f"Trainingsdaten: {X_train.shape[0]} Samples ({X_train.index.min().date()} bis {X_train.index.max().date()})")
+    print(f"Testdaten: {X_test.shape[0]} Samples ({X_test.index.min().date()} bis {X_test.index.max().date()})")
+    print(f"Anzahl Features: {X_train.shape[1]}")
+    print(f"Zielvariablen: {target_cols_present}") # Zeige die tatsächlichen Zielvariablen an
+    
+     # Überprüfung des Split-Verhältnisses
+    total_samples_after_engineering = X_train.shape[0] + X_test.shape[0]
+
+    train_percentage = (X_train.shape[0] / total_samples_after_engineering) * 100
+    test_percentage = (X_test.shape[0] / total_samples_after_engineering) * 100
+
+    print(f"\nÜberprüfung des Split-Verhältnisses:")
+    print(f"  Gesamte Samples nach Feature Engineering: {total_samples_after_engineering}")
+    print(f"  Trainings-Anteil: {train_percentage:.2f}%")
+    print(f"  Test-Anteil:      {test_percentage:.2f}%")
+    
+    print("Train/Test Split abgeschlossen.")
+    
 
 if __name__ == "__main__":
     main()
-
-# # 2. Datenvorverarbeitung
-# #-------------------------------------------------------------------------------
-# print("\n2. Datenvorverarbeitung")
-# print("Überprüfung auf fehlende Werte (vor Imputation - sollte mit EDA übereinstimmen):")
-# print(data.isnull().sum())
-
-# # Strategie für fehlende Werte: Vorwärtsfüllen (fill forward)
-# print("\nFülle fehlende Werte mit ffill und bfill...")
-# data.ffill(inplace=True)
-# # Falls nach ffill immer noch NaNs am Anfang vorhanden sind, füllen wir mit bfill
-# data.bfill(inplace=True)
-
-# print("\nÜberprüfung auf fehlende Werte (nach Imputation):")
-# print(data.isnull().sum())
-
-# if data.isnull().sum().sum() > 0:
-#     print("Warnung: Es gibt immer noch fehlende Werte nach ffill/bfill.")
-#     print("Entferne verbleibende Zeilen mit NaNs...")
-#     data.dropna(inplace=True)
-
-
-# # 3. Feature Engineering
-# #-------------------------------------------------------------------------------
-# # (Rest des Codes bleibt unverändert wie in der vorherigen Version)
-# print("\n3. Feature Engineering")
-
-# # Zielvariablen erstellen: Wetterbedingungen des *nächsten* Tages
-# data['tavg_target'] = data['tavg'].shift(-1)
-# data['wspd_target'] = data['wspd'].shift(-1)
-
-# # Spalten für Lag Features definieren (alle verfügbaren Input-Spalten)
-# lag_feature_cols = data.columns.tolist()
-# lag_feature_cols = [col for col in lag_feature_cols if not col.endswith('_target')]
-
-# print(f"Erstelle Lag-Features für Spalten: {lag_feature_cols}")
-
-# # Lag Features erstellen
-# for col in lag_feature_cols:
-#     for i in range(1, 4): # Wetter der letzten 3 Tage als Features
-#         data[f'{col}_lag_{i}'] = data[col].shift(i)
-
-# # Zeitbasierte Features
-# data['month'] = data.index.month
-# data['dayofyear'] = data.index.dayofyear
-# data['weekday'] = data.index.weekday
-
-# # Entfernen von Zeilen mit NaN-Werten, die durch shift() entstanden sind
-# data.dropna(inplace=True)
-
-# print("Daten nach Feature Engineering (erste paar Zeilen):")
-# print(data.head())
-# print("\nDimensionen der aufbereiteten Daten:", data.shape)
-
 
 # # 4. Train/Test Split (Chronologisch)
 # #-------------------------------------------------------------------------------

@@ -25,6 +25,9 @@ TARGET_COLUMNS = ['tavg_target', 'wspd_target']
 ORIGINAL_TARGET_BASE_COLUMNS = ['tavg', 'wspd'] # Originalspalten, die zu Targets werden
 LAG_DAYS = 3 # Anzahl der Lag-Tage
 
+# ----- Train/Test Daten -----
+TEST_PERIOD_DAYS = 3 * 365 # Tage für den Testdatensatz
+
 # ----- Modellparameter -----
 RANDOM_STATE = 42
 

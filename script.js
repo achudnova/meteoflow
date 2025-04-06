@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const updateDate = new Date(data.generated_at);
                 // Formatiere es lesbar für deutsche Spracheinstellungen
                 lastUpdateSpan.textContent = updateDate.toLocaleString('de-DE', {
-                    timeZone: 'Europe/Berlin',
+                    timeZone: 'Europe/Berlin',  
                     dateStyle: 'medium', // z.B. 06.04.2025
                     timeStyle: 'medium'  // z.B. 16:43:25
                 });

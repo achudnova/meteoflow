@@ -115,20 +115,50 @@ def run_prediction_and_save():
         sys.exit(1)
 
     for model_name, model in models.items():
+        console.print(f"--- Verarbeite Vorhersage für: [bold]{model_name}[/bold] ---") # Mehr Info
         try:
-            prediction = model.predict(features_for_prediction)
+            features_np = features_for_prediction.to_numpy() # Sicherstellen, dass es NumPy ist
+            console.print(f"Input Features shape für {model_name}: {features_np.shape}")
+            # console.print(f"Input Features für {model_name}: {features_np}") # Optional: sehr detailliert
+
+            prediction = model.predict(features_np) # Verwende NumPy-Array
+            console.print(f"Roh-Vorhersage ({model_name}): {prediction}") # <-- ROH-AUSGABE LOGGEN
+            console.print(f"Typ der Roh-Vorhersage ({model_name}): {type(prediction)}")
+            console.print(f"Shape der Roh-Vorhersage ({model_name}): {getattr(prediction, 'shape', 'N/A')}")
+
+
             if prediction.ndim == 1:
                 prediction = prediction.reshape(1, -1)
+                console.print(f"Reshaped Vorhersage ({model_name}): {prediction}")
 
+
+            # Prüfe Indizes (nur zur Sicherheit)
+            console.print(f"Indices für {model_name}: tavg_idx={tavg_idx}, wspd_idx={wspd_idx}, prediction.shape={prediction.shape}")
+
+            # Werte extrahieren
             temp_pred = prediction[0, tavg_idx] if tavg_idx != -1 and tavg_idx < prediction.shape[1] else None
             wind_pred = prediction[0, wspd_idx] if wspd_idx != -1 and wspd_idx < prediction.shape[1] else None
+
+            # Extrahierte Werte loggen
+            console.print(f"Extrahierte Werte ({model_name}): temp={temp_pred} (Typ: {type(temp_pred)}), wind={wind_pred} (Typ: {type(wind_pred)})")
+
+
+            # Prüfe explizit auf NaN, bevor du speicherst
+            if isinstance(temp_pred, float) and np.isnan(temp_pred):
+                console.print(f"[yellow]WARNUNG ({model_name}): Temperaturvorhersage ist NaN![/yellow]")
+                temp_pred = None # Wandle NaN in None für JSON um
+            if isinstance(wind_pred, float) and np.isnan(wind_pred):
+                console.print(f"[yellow]WARNUNG ({model_name}): Windvorhersage ist NaN![/yellow]")
+                wind_pred = None # Wandle NaN in None für JSON um
 
             predictions_output[model_name] = {
                 'temp': temp_pred,
                 'wspd': wind_pred
             }
         except Exception as e:
-            console.print(f"[yellow]   Warnung bei Vorhersage mit {model_name}: {e}[/yellow]")
+            console.print(f"[bold red]   FEHLER bei Vorhersage mit {model_name}: {e}[/bold red]")
+            # Optional: Detaillierteren Traceback loggen
+            # console.print_exception(show_locals=True)
             predictions_output[model_name] = {'temp': None, 'wspd': None} # Fehler markieren
 
     console.print("[green]   ✔️ Vorhersage abgeschlossen.[/green]")

@@ -1,0 +1,39 @@
+name: Daily Weather Prediction Update
+
+on:
+  schedule:
+    # Läuft jeden Tag um 05:00 UTC (passe die Zeit an)
+    - cron: '1 7 * * *'
+  workflow_dispatch: # Erlaubt manuelles Starten über die Actions-UI
+
+jobs:
+  update-prediction:
+    runs-on: ubuntu-latest # Verwendet einen Linux-Runner
+    permissions:
+      contents: write # Erlaubt der Action, Änderungen zu committen/pushen
+
+    steps:
+      - name: Code auschecken
+        uses: actions/checkout@v4 # Holt deinen Code
+
+      - name: Python Umgebung einrichten
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12' # Oder deine benötigte Python-Version
+
+      - name: Abhängigkeiten installieren
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Vorhersage-Skript ausführen
+        run: python src/update_prediction_data.py # Führt dein neues Skript aus
+
+      - name: Änderungen committen und pushen
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: Update daily weather prediction data 🤖"
+          file_pattern: prediction.json # Nur diese Datei committen
+          commit_user_name: GitHub Action Bot
+          commit_user_email: action@github.com
+          commit_author: GitHub Action Bot <action@github.com>

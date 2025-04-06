@@ -1,0 +1,49 @@
+body {
+    font-family: sans-serif;
+    line-height: 1.6;
+    margin: 20px;
+    background-color: #f4f4f4;
+}
+
+h1 {
+    color: #333;
+    text-align: center;
+}
+
+#forecast {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    margin-bottom: 15px;
+}
+
+.prediction-box {
+    border: 1px solid #ddd;
+    padding: 15px;
+    margin-top: 15px;
+    border-radius: 5px;
+    background-color: #e9f5ff; /* Leichtes Blau */
+}
+ .prediction-box h3 {
+    margin-top: 0;
+    color: #0056b3; /* Dunkleres Blau */
+ }
+
+.prediction-box p {
+    margin: 5px 0;
+}
+ .prediction-box strong {
+    color: #333;
+ }
+
+.last-update {
+    text-align: center;
+    font-size: 0.9em;
+    color: #666;
+}
+
+.error {
+    color: red;
+    font-weight: bold;
+}

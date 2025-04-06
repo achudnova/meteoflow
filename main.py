@@ -7,7 +7,7 @@ from data_collection import get_weather_data
 from eda import start_eda
 from data_preprocessing import preprocess_data
 from feature_engineering import engineer_feautures
-
+from model_training import train_models
 
 def main():
     # ----- 1. Datenerfassung -----
@@ -102,7 +102,10 @@ def main():
     
     print("Train/Test Split abgeschlossen.")
     
-
+    # ----- 6. Modelltraining -----
+    print("\n6. Modelltraining")
+    train_models(X_train, y_train, config.RF_PARAMETER, config.XGB_PARAMETER)
+    
 if __name__ == "__main__":
     main()
 

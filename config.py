@@ -41,7 +41,7 @@ RF_PARAMETER = {
 }
 
 # XGBoost
-XGB = {
+XGB_PARAMETER = {
     'objective': 'reg:squarederror',
     'n_estimators': 100,
     'random_state': RANDOM_STATE,

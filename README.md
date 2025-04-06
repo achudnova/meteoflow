@@ -45,3 +45,18 @@ Args:
 Returns:
 - Pandas DataFrame mit den neuen Features
 - oder None, wenn nicht genügend Daten für Lags vorhanden sind
+
+### main.py (Train/Test Split)
+
+
+
+### model_training.py
+
+
+### model_manager.py
+
+
+### model_evaluation.py
+
+> Wie genau sind die Vorhersagen im Vergleich zur Realität, wenn das Modell auf Daten trifft, die es noch nie gesehen hat?"
+

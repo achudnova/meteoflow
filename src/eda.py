@@ -3,29 +3,12 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import os
 
+from plot_manager import save_plot
+
 def start_eda(data: pd.DataFrame, plot_columns: list, save_dir: str):
     if data.empty:
         print("DataFrame ist leer. EDA kann nicht durchgeführt werden.")
         return
-
-    try:
-        os.makedirs(save_dir, exist_ok=True)
-        print(f"Plots werden in '{save_dir}' gespeichert.")
-    except OSError as e:
-        print(f"Fehler: konnte das Verzeichnis '{save_dir}' nicht erstellen. {e}")
-        save_dir = None
-        print("Plots werden nicht gespeichert.")
-    
-    def save_plot(filename: str):
-        if save_dir:
-            filepath = os.path.join(save_dir, filename)
-            try:
-                plt.savefig(filepath, bbox_inches='tight')
-                plt.close()
-                print(f"Plot gespeichert: {filepath}")
-            except Exception as e:
-                print(f"Fehler beim Speichern des Plots: {e}")
-        plt.show()
 
     # Zeige die ersten und letzten Zeilen des Datensatzes
     print("\nErste 5 Zeilen der ausgewählten Daten:")
@@ -65,7 +48,7 @@ def start_eda(data: pd.DataFrame, plot_columns: list, save_dir: str):
         plt.figure(figsize=(10, 6))
         sns.heatmap(data.isnull(), cbar=False, cmap="viridis")
         plt.title("Muster der fehlenden Werte")
-        plt.show()
+        save_plot('fehlende_werte.png', save_dir)
     else:
         print("\nKeine fehlenden Werte zum Visualisieren.")
 
@@ -75,7 +58,7 @@ def start_eda(data: pd.DataFrame, plot_columns: list, save_dir: str):
         data.hist(bins=30, figsize=(15, 10), layout=(-1, 3))
         plt.suptitle("Histogramme der Wettervariablen")
         plt.tight_layout(rect=[0, 0.03, 1, 0.95])
-        save_plot('histogramm.png')
+        save_plot('histogramm.png', save_dir)
     except Exception as e:
         print(f"Fehler beim Erstellen der Histogramme: {e}")
 
@@ -93,7 +76,7 @@ def start_eda(data: pd.DataFrame, plot_columns: list, save_dir: str):
             plt.grid(True, linestyle="--", alpha=0.6)
         plt.xlabel("Datum")
         plt.tight_layout()
-        save_plot('zeitreihen_plots.png')
+        save_plot('zeitreihen_plots.png', save_dir)
     else:
         print("Keine der spezifizierten Spalten für Zeitreihen-Plots gefunden.")
 
@@ -106,7 +89,7 @@ def start_eda(data: pd.DataFrame, plot_columns: list, save_dir: str):
             correlation_matrix, annot=True, cmap="coolwarm", fmt=".2f", linewidths=0.5
         )
         plt.title("Korrelationsmatrix der Wettervariablen")
-        save_plot('korrelationsmatrix.png')
+        save_plot('korrelationsmatrix.png', save_dir)
         print("\nKorrelationsmatrix:")
         print(correlation_matrix)
     else:
@@ -126,7 +109,7 @@ def start_eda(data: pd.DataFrame, plot_columns: list, save_dir: str):
             plt.ylabel("")  # Y-Label entfernen für Kompaktheit
         plt.suptitle("Boxplots der Wettervariablen")
         plt.tight_layout(rect=[0, 0.03, 1, 0.95])
-        save_plot('boxplots.png')
+        save_plot('boxplots.png', save_dir)
     else:
         print("Keine Daten für Boxplots.")
 

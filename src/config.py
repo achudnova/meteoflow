@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from meteostat import Point
+import os
 
 # ----- Standort: Berlin -----
 LATITUDE = 52.5200
@@ -35,7 +36,7 @@ RANDOM_STATE = 42
 RF_PARAMETER = {
     'n_estimators': 100,
     'random_state': RANDOM_STATE,
-    'n_jobs': -1,
+    'n_jobs': 1,
     'max_depth': 15,
     'min_samples_split': 5
 }
@@ -45,7 +46,7 @@ XGB_PARAMETER = {
     'objective': 'reg:squarederror',
     'n_estimators': 100,
     'random_state': RANDOM_STATE,
-    'n_jobs': -1,
+    'n_jobs': 1,
     'learning_rate': 0.1,
     'max_depth': 7
 }
@@ -55,7 +56,7 @@ LGBM = {
     'objective': 'regression',
     'n_estimators': 100,
     'random_state': RANDOM_STATE,
-    'n_jobs': -1,
+    'n_jobs': 1,
     'learning_rate': 0.1,
     'max_depth': 7
 }
@@ -65,6 +66,8 @@ EDA_PLOT_COLUMNS = ['tavg', 'wspd', 'prcp', 'pres'] # Spalten für Zeitreihenplo
 EVAL_PLOT_TARGET_COLUMN = 'tavg_target' # Zielspalte für Evaluierungsplots
 
 # ----- Pfade -----
-EDA_PLOT_DIR = "/home/achudnova/Documents/PROJECTS/meteoflow/plots"
+_THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+_PROJECT_ROOT = os.path.dirname(_THIS_DIR)
 
-MODEL_SAVE_DIR = "/home/achudnova/Documents/PROJECTS/meteoflow/models"
+EDA_PLOT_DIR = os.path.join(_PROJECT_ROOT, "plots")
+MODEL_SAVE_DIR = os.path.join(_PROJECT_ROOT, "saved_models")

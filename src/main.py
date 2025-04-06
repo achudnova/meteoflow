@@ -8,8 +8,9 @@ from eda import start_eda
 from data_preprocessing import preprocess_data
 from feature_engineering import engineer_feautures
 from model_training import train_models
-from model_manager import load_model
 from model_evaluation import evaluate_model
+from prediction import predict_next_day
+# from .model_manager import load_model
 
 
 def main():
@@ -130,105 +131,21 @@ def main():
         X_test=X_test,
         y_test=y_test,
         target_cols=target_cols_present,
-        plot_target_col=config.EVAL_PLOT_TARGET_COLUMN,
+        save_dir=config.EDA_PLOT_DIR
     )
+
+    # ----- 8. Vorhersage für den nächsten Tag -----
+    print("\n8. Vorhersage für den nächsten Tag")
+    last_available_data_row = data_featured.iloc[-1:]
+    predict_next_day(
+        models=trained_models,
+        last_available_data_row=last_available_data_row,
+        features_cols=features_cols,  # Die Liste der Feature-Namen
+        target_cols=target_cols_present,  # Die Liste der Ziel-Namen
+    )
+
+    print("\nWettervorhersage-Workflow abgeschlossen.")
 
 
 if __name__ == "__main__":
     main()
-
-
-# # 6. Modellbewertung
-# #-------------------------------------------------------------------------------
-# print("\n6. Modellbewertung")
-# from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
-
-# # Vorhersagen auf dem Testset
-# y_pred_rf = rf_model.predict(X_test)
-# y_pred_xgb = xgb_model.predict(X_test)
-
-# # Metriken berechnen
-# results = {}
-# models = {'RandomForest': y_pred_rf, 'XGBoost': y_pred_xgb}
-
-# for model_name, y_pred in models.items():
-#     print(f"\n--- {model_name} ---")
-#     metrics = {}
-#     for i, target in enumerate(target_cols):
-#         true_values = y_test.iloc[:, i]
-#         pred_values = y_pred[:, i]
-
-#         mae = mean_absolute_error(true_values, pred_values)
-#         rmse = np.sqrt(mean_squared_error(true_values, pred_values))
-#         r2 = r2_score(true_values, pred_values)
-#         metrics[target] = {'MAE': mae, 'RMSE': rmse, 'R2': r2}
-#         print(f"  {target}:")
-#         print(f"    MAE:  {mae:.2f}")
-#         print(f"    RMSE: {rmse:.2f}")
-#         print(f"    R²:   {r2:.2f}")
-#     results[model_name] = metrics
-
-# # Visualisierung der Vorhersagen vs. tatsächliche Werte (Temperatur)
-# try:
-#     tavg_target_index = target_cols.index('tavg_target')
-#     plt.figure(figsize=(15, 6))
-#     plt.plot(y_test.index, y_test.iloc[:, tavg_target_index], label='Tatsächliche Temperatur', alpha=0.7, marker='.', linestyle='None') # Punkte für Ist-Werte
-#     plt.plot(y_test.index, y_pred_rf[:, tavg_target_index], label='RF Vorhersage', linestyle='--')
-#     plt.plot(y_test.index, y_pred_xgb[:, tavg_target_index], label='XGBoost Vorhersage', linestyle=':')
-#     plt.title('Temperaturvorhersage vs. Tatsächliche Werte (Testset)')
-#     plt.xlabel('Datum')
-#     plt.ylabel('Temperatur (°C)')
-#     plt.legend()
-#     plt.grid(True, linestyle='--', alpha=0.6)
-#     plt.tight_layout()
-#     plt.show()
-# except ValueError:
-#     print("Temperatur ('tavg_target') nicht in den Zielvariablen gefunden, Plot wird übersprungen.")
-# except IndexError:
-#      print("Indexfehler beim Zugriff auf Vorhersagedaten für den Plot. Überprüfe die Dimensionen.")
-
-
-# # 7. Vorhersage für den nächsten Tag
-# #-------------------------------------------------------------------------------
-# print("\n7. Vorhersage für den nächsten Tag")
-
-# # Nimm die letzte verfügbare Zeile aus den *aufbereiteten Daten*
-# last_available_data_row = data.iloc[-1:]
-
-# # Extrahiere die Features für die Vorhersage
-# features_for_prediction = last_available_data_row[features_cols]
-
-# print("\nFeatures für die Vorhersage von morgen (basierend auf Daten vom {}):".format(last_available_data_row.index[0].date()))
-
-# if features_for_prediction.isnull().sum().sum() > 0:
-#     print("\nWarnung: Fehlende Werte in den Features für die Vorhersage entdeckt!")
-
-# # Vorhersage treffen
-# prediction_rf = rf_model.predict(features_for_prediction)
-# prediction_xgb = xgb_model.predict(features_for_prediction)
-
-# # Datum für die Vorhersage (morgen)
-# prediction_date = data.index.max() + timedelta(days=1)
-
-# print(f"\nVorhersage für {prediction_date.date()}:")
-
-# # Finde Indizes der Zielvariablen dynamisch
-# try:
-#     tavg_idx = target_cols.index('tavg_target')
-#     wspd_idx = target_cols.index('wspd_target')
-
-#     print("--- RandomForest ---")
-#     print(f"  Vorhergesagte Temperatur: {prediction_rf[0, tavg_idx]:.1f} °C")
-#     print(f"  Vorhergesagte Windgeschwindigkeit: {prediction_rf[0, wspd_idx]:.1f} km/h")
-
-#     print("--- XGBoost ---")
-#     print(f"  Vorhergesagte Temperatur: {prediction_xgb[0, tavg_idx]:.1f} °C")
-#     print(f"  Vorhergesagte Windgeschwindigkeit: {prediction_xgb[0, wspd_idx]:.1f} km/h")
-
-# except ValueError as ve:
-#     print(f"Fehler beim Extrahieren der Vorhersagewerte: {ve}")
-# except IndexError:
-#      print("Indexfehler beim Zugriff auf Vorhersagedaten. Überprüfe die Dimensionen der Vorhersage-Arrays.")
-
-
-# print("\nProjekt abgeschlossen.")

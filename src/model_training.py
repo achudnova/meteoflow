@@ -40,6 +40,7 @@ def train_models(
     else:
         print("\nKein Speicherverzeichnis angegeben, RandomForest-Modell wird nicht gespeichert.")
 
+    
     print("\nModelltraining abgeschlossen!")
 
     return models

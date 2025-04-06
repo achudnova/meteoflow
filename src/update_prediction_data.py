@@ -101,11 +101,10 @@ def run_prediction_and_save():
         console.print("[red]FEHLER: Features konnten nicht erstellt werden. Abbruch.[/red]")
         sys.exit(1)
 
-    # --- Vorhersage ---
     console.print("[cyan]Mache Vorhersage...[/cyan]")
-    predictions_output = {}
+    predictions_output = {} # Dictionary zum Sammeln der *verarbeiteten* Vorhersagen
     prediction_date = features_for_prediction.index.max() + timedelta(days=1)
-    target_cols = config.TARGET_COLUMNS # Aus config holen
+    target_cols = config.TARGET_COLUMNS
 
     try:
         tavg_idx = target_cols.index('tavg_target') if 'tavg_target' in target_cols else -1
@@ -115,74 +114,98 @@ def run_prediction_and_save():
         sys.exit(1)
 
     for model_name, model in models.items():
-        console.print(f"--- Verarbeite Vorhersage für: [bold]{model_name}[/bold] ---") # Mehr Info
-        try:
-            features_np = features_for_prediction.to_numpy() # Sicherstellen, dass es NumPy ist
-            console.print(f"Input Features shape für {model_name}: {features_np.shape}")
-            # console.print(f"Input Features für {model_name}: {features_np}") # Optional: sehr detailliert
+        console.print(f"--- Verarbeite Vorhersage für: [bold]{model_name}[/bold] ---")
+        temp_processed: float | None = None # Variable für verarbeitete Temperatur
+        wind_processed: float | None = None # Variable für verarbeiteten Wind
 
-            prediction = model.predict(features_np) # Verwende NumPy-Array
-            console.print(f"Roh-Vorhersage ({model_name}): {prediction}") # <-- ROH-AUSGABE LOGGEN
+        try:
+            features_np = features_for_prediction.to_numpy()
+            console.print(f"Input Features shape für {model_name}: {features_np.shape}")
+
+            prediction = model.predict(features_np)
+            console.print(f"Roh-Vorhersage ({model_name}): {prediction}")
             console.print(f"Typ der Roh-Vorhersage ({model_name}): {type(prediction)}")
             console.print(f"Shape der Roh-Vorhersage ({model_name}): {getattr(prediction, 'shape', 'N/A')}")
-
 
             if prediction.ndim == 1:
                 prediction = prediction.reshape(1, -1)
                 console.print(f"Reshaped Vorhersage ({model_name}): {prediction}")
 
-
-            # Prüfe Indizes (nur zur Sicherheit)
             console.print(f"Indices für {model_name}: tavg_idx={tavg_idx}, wspd_idx={wspd_idx}, prediction.shape={prediction.shape}")
 
             # Werte extrahieren
-            temp_pred = prediction[0, tavg_idx] if tavg_idx != -1 and tavg_idx < prediction.shape[1] else None
-            wind_pred = prediction[0, wspd_idx] if wspd_idx != -1 and wspd_idx < prediction.shape[1] else None
+            temp_raw = prediction[0, tavg_idx] if tavg_idx != -1 and tavg_idx < prediction.shape[1] else None
+            wind_raw = prediction[0, wspd_idx] if wspd_idx != -1 and wspd_idx < prediction.shape[1] else None
 
-            # Extrahierte Werte loggen
-            console.print(f"Extrahierte Werte ({model_name}): temp={temp_pred} (Typ: {type(temp_pred)}), wind={wind_pred} (Typ: {type(wind_pred)})")
+            console.print(f"Extrahierte Roh-Werte ({model_name}): temp={temp_raw} (Typ: {type(temp_raw)}), wind={wind_raw} (Typ: {type(wind_raw)})")
 
+            # --- HIER die explizite Umwandlung und NaN-Prüfung ---
+            if temp_raw is not None:
+                if isinstance(temp_raw, (float, np.floating)) and np.isnan(temp_raw):
+                     console.print(f"[yellow]WARNUNG ({model_name}): Temperaturvorhersage ist NaN![/yellow]")
+                     temp_processed = None # NaN wird zu None
+                else:
+                     try:
+                         # In Standard Python float umwandeln
+                         temp_processed = float(temp_raw)
+                     except (ValueError, TypeError):
+                          console.print(f"[yellow]WARNUNG ({model_name}): Konnte Temperaturwert '{temp_raw}' nicht in float umwandeln.[/yellow]")
+                          temp_processed = None
 
-            # Prüfe explizit auf NaN, bevor du speicherst
-            if isinstance(temp_pred, float) and np.isnan(temp_pred):
-                console.print(f"[yellow]WARNUNG ({model_name}): Temperaturvorhersage ist NaN![/yellow]")
-                temp_pred = None # Wandle NaN in None für JSON um
-            if isinstance(wind_pred, float) and np.isnan(wind_pred):
-                console.print(f"[yellow]WARNUNG ({model_name}): Windvorhersage ist NaN![/yellow]")
-                wind_pred = None # Wandle NaN in None für JSON um
+            if wind_raw is not None:
+                 if isinstance(wind_raw, (float, np.floating)) and np.isnan(wind_raw):
+                      console.print(f"[yellow]WARNUNG ({model_name}): Windvorhersage ist NaN![/yellow]")
+                      wind_processed = None # NaN wird zu None
+                 else:
+                      try:
+                          # In Standard Python float umwandeln
+                          wind_processed = float(wind_raw)
+                      except (ValueError, TypeError):
+                           console.print(f"[yellow]WARNUNG ({model_name}): Konnte Windwert '{wind_raw}' nicht in float umwandeln.[/yellow]")
+                           wind_processed = None
 
+            # Speichere die verarbeiteten Werte
             predictions_output[model_name] = {
-                'temp': temp_pred,
-                'wspd': wind_pred
+                'temp': temp_processed,
+                'wspd': wind_processed
             }
+            console.print(f"Verarbeitete Werte ({model_name}): temp={temp_processed}, wind={wind_processed}")
+
         except Exception as e:
             console.print(f"[bold red]   FEHLER bei Vorhersage mit {model_name}: {e}[/bold red]")
-            # Optional: Detaillierteren Traceback loggen
-            # console.print_exception(show_locals=True)
-            predictions_output[model_name] = {'temp': None, 'wspd': None} # Fehler markieren
+            console.print_exception(show_locals=True) # Mehr Details zum Fehler
+            predictions_output[model_name] = {'temp': None, 'wspd': None}
 
-    console.print("[green]   ✔️ Vorhersage abgeschlossen.[/green]")
+    console.print("[green]   ✔️ Vorhersage-Loop abgeschlossen.[/green]") # Geändert
 
-    # --- Daten für JSON aufbereiten ---
+    # --- Daten für JSON aufbereiten (holt jetzt die verarbeiteten Werte) ---
     output_data = {
         "forecast_date": prediction_date.strftime("%Y-%m-%d"),
         "rf_temp_c": predictions_output.get('rf', {}).get('temp'),
         "rf_wspd_kmh": predictions_output.get('rf', {}).get('wspd'),
         "xgb_temp_c": predictions_output.get('xgb', {}).get('temp'),
         "xgb_wspd_kmh": predictions_output.get('xgb', {}).get('wspd'),
-        "generated_at": datetime.now().isoformat() # Zeitstempel der Erstellung
+        "generated_at": datetime.now().isoformat()
     }
 
+    # --- FINALES LOGGING vor dem Speichern ---
+    console.print("\n[bold]Finale Daten für JSON:[/bold]")
+    console.print(output_data)
+    console.print(f"Typ von xgb_temp_c: {type(output_data['xgb_temp_c'])}")
+    console.print(f"Typ von xgb_wspd_kmh: {type(output_data['xgb_wspd_kmh'])}")
+    # -----------------------------------------
+
     # --- JSON Speichern ---
-    # WICHTIG: Der Pfad muss relativ zum Repository-Stamm sein!
-    json_filepath = "prediction.json" # Speichert im Stammverzeichnis
-    console.print(f"[cyan]Speichere Vorhersage in '{json_filepath}'...[/cyan]")
+    json_filepath = "prediction.json"
+    console.print(f"\n[cyan]Speichere Vorhersage in '{json_filepath}'...[/cyan]")
     try:
         with open(json_filepath, 'w') as f:
-            json.dump(output_data, f, indent=2, default=lambda x: round(x, 1) if isinstance(x, float) else None) # Runden & None für Fehler
+            # Die default lambda ist jetzt weniger kritisch, kann aber bleiben
+            json.dump(output_data, f, indent=2, default=lambda x: round(x, 1) if isinstance(x, (float, int)) else None)
         console.print(f"[green]   ✔️ Vorhersage erfolgreich in '{json_filepath}' gespeichert.[/green]")
     except Exception as e:
         console.print(f"[red]   FEHLER beim Speichern der JSON-Datei: {e}[/red]")
+        console.print_exception(show_locals=True) # Mehr Details zum Speicherfehler
         sys.exit(1)
 
     console.rule("[bold blue]Update abgeschlossen[/bold blue]")

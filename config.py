@@ -64,5 +64,7 @@ LGBM = {
 EDA_PLOT_COLUMNS = ['tavg', 'wspd', 'prcp', 'pres'] # Spalten für Zeitreihenplots
 EVAL_PLOT_TARGET_COLUMN = 'tavg_target' # Zielspalte für Evaluierungsplots
 
-# ----- Plots speichern -----
+# ----- Pfade -----
 EDA_PLOT_DIR = "/home/achudnova/Documents/PROJECTS/meteoflow/plots"
+
+MODEL_SAVE_DIR = "/home/achudnova/Documents/PROJECTS/meteoflow/models"

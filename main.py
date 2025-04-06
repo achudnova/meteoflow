@@ -8,6 +8,7 @@ from eda import start_eda
 from data_preprocessing import preprocess_data
 from feature_engineering import engineer_feautures
 from model_training import train_models
+from model_manager import load_model
 
 def main():
     # ----- 1. Datenerfassung -----
@@ -104,58 +105,10 @@ def main():
     
     # ----- 6. Modelltraining -----
     print("\n6. Modelltraining")
-    train_models(X_train, y_train, config.RF_PARAMETER, config.XGB_PARAMETER)
+    train_models(X_train, y_train, config.RF_PARAMETER, config.XGB_PARAMETER, config.MODEL_SAVE_DIR)
     
 if __name__ == "__main__":
     main()
-
-# # 4. Train/Test Split (Chronologisch)
-# #-------------------------------------------------------------------------------
-# print("\n4. Train/Test Split")
-
-# target_cols = ['tavg_target', 'wspd_target']
-# original_target_base_cols = ['tavg', 'wspd']
-# features_cols = [col for col in data.columns if col not in target_cols + original_target_base_cols]
-
-# X = data[features_cols]
-# y = data[target_cols]
-
-# test_period_days = 2 * 365
-# if len(data) > test_period_days:
-#     split_index = len(data) - test_period_days
-#     split_date = data.index[split_index]
-
-#     X_train = X[X.index < split_date]
-#     X_test = X[X.index >= split_date]
-#     y_train = y[y.index < split_date]
-#     y_test = y[y.index >= split_date]
-
-#     print(f"Split-Datum: {split_date.date()}")
-#     print(f"Trainingsdaten: {X_train.shape[0]} Samples ({X_train.index.min().date()} bis {X_train.index.max().date()})")
-#     print(f"Testdaten: {X_test.shape[0]} Samples ({X_test.index.min().date()} bis {X_test.index.max().date()})")
-#     print(f"Anzahl Features: {X_train.shape[1]}")
-# else:
-#     print("Nicht genügend Daten für einen sinnvollen Train/Test-Split vorhanden.")
-#     exit()
-
-
-# # 5. Modelltraining
-# #-------------------------------------------------------------------------------
-# print("\n5. Modelltraining")
-# from sklearn.ensemble import RandomForestRegressor
-# from xgboost import XGBRegressor
-
-# # --- Random Forest ---
-# print("Training RandomForestRegressor...")
-# rf_model = RandomForestRegressor(n_estimators=100, random_state=42, n_jobs=-1, max_depth=15, min_samples_split=5)
-# rf_model.fit(X_train, y_train)
-# print("RandomForestRegressor trainiert.")
-
-# # --- XGBoost ---
-# print("Training XGBoostRegressor...")
-# xgb_model = XGBRegressor(objective='reg:squarederror', n_estimators=100, random_state=42, n_jobs=-1, learning_rate=0.1, max_depth=7)
-# xgb_model.fit(X_train, y_train)
-# print("XGBoostRegressor trainiert.")
 
 
 # # 6. Modellbewertung

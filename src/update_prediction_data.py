@@ -4,31 +4,32 @@ import numpy as np
 import sys
 import os
 import json
-# Importiere datetime UND date
 from datetime import datetime, timedelta, date
 
-# --- Konfiguration und nötige Imports ---
 import config
-from data_collection import get_weather_data # Stelle sicher, dass der Pfad/Import stimmt
-from feature_engineering import engineer_features # Stelle sicher, dass der Pfad/Import stimmt
-from model_manager import load_model # Stelle sicher, dass der Pfad/Import stimmt
+from data_collection import get_weather_data
+from feature_engineering import engineer_features
+from model_manager import load_model
 from rich.console import Console
 
 console = Console()
 
-def get_features_for_date(target_prediction_date: date):
-    """Holt Daten bis zum Vortag und erstellt Features für die Vorhersage des target_prediction_date."""
-    console.print(f"[cyan]Hole Daten für Vorhersage vom {target_prediction_date}...[/cyan]")
+def get_latest_features_for_tomorrow():
+    """Holt die neuesten Daten und erstellt Features für die morgige Vorhersage."""
+    console.print("[cyan]Hole neueste Daten für Feature-Erstellung...[/cyan]")
+    # Daten bis HEUTE holen, damit der letzte Feature-Tag GESTERN ist
+    # (oder vorgestern, wenn heute noch nicht verfügbar/verarbeitet)
+    fetch_end_date = date.today() + timedelta(days=1) # Ende ist morgen früh
+    fetch_start_date = fetch_end_date - timedelta(days=config.LAG_DAYS + 10) # Etwas mehr Puffer holen
 
-    # --- DATUM IN DATETIME UMWANDELN ---
-    end_dt = datetime(target_prediction_date.year, target_prediction_date.month, target_prediction_date.day, 0, 0, 0)
-    start_dt = end_dt - timedelta(days=config.LAG_DAYS + 5)
-    fetch_end_dt_inclusive = end_dt - timedelta(seconds=1) # 23:59:59 des Vortages
+    # --- Umwandlung in datetime für get_weather_data ---
+    end_dt = datetime(fetch_end_date.year, fetch_end_date.month, fetch_end_date.day, 0, 0, 0)
+    start_dt = datetime(fetch_start_date.year, fetch_start_date.month, fetch_start_date.day, 0, 0, 0)
+    fetch_end_dt_inclusive = end_dt - timedelta(seconds=1) # Bis 23:59:59 des Vortages holen
 
     console.print(f"   Hole Rohdaten von {start_dt.strftime('%Y-%m-%d')} bis {fetch_end_dt_inclusive.strftime('%Y-%m-%d')}")
 
     try:
-        # --- ÜBERGIB DATETIME-OBJEKTE ---
         data_raw = get_weather_data(
             location=config.LOCATION,
             start_date=start_dt,
@@ -37,17 +38,17 @@ def get_features_for_date(target_prediction_date: date):
             essential_columns=config.ESSENTIAL_COLS
         )
         if data_raw.empty:
-             console.print("[red]   FEHLER: Keine Rohdaten für den benötigten Zeitraum erhalten.[/red]")
+             console.print("[red]   FEHLER: Keine Rohdaten erhalten.[/red]")
              return None, None
         console.print("[green]   ✔️ Rohdaten geholt.[/green]")
 
-        # --- Minimales Preprocessing ---
+        # --- Preprocessing ---
         data_raw.ffill(inplace=True)
         data_raw.bfill(inplace=True)
         if data_raw.isnull().sum().sum() > 0:
              data_raw.dropna(inplace=True)
              if data_raw.empty:
-                  console.print("[red]   FEHLER: Keine Daten mehr nach dropna.[/red]")
+                  console.print("[red]   FEHLER: Keine Daten nach dropna.[/red]")
                   return None, None
 
         # --- Feature Engineering ---
@@ -56,22 +57,15 @@ def get_features_for_date(target_prediction_date: date):
             target_cols=config.TARGET_COLUMNS,
             target_base_cols=config.ORIGINAL_TARGET_BASE_COLUMNS,
             lag_days=config.LAG_DAYS
-            # Console hier nicht übergeben, wenn engineer_features es nicht erwartet
         )
-
         if data_featured is None or data_featured.empty:
             console.print("[red]   FEHLER: Keine Features nach Engineering.[/red]")
             return None, None
 
-        # --- Letzte Zeile holen und prüfen ---
+        # --- Letzte Zeile holen (Basis für Vorhersage) ---
         last_row = data_featured.iloc[-1:]
         last_data_date = last_row.index.max().date()
-        expected_last_date = target_prediction_date - timedelta(days=1) # Erwartet wird der Vortag von heute
-        if last_data_date != expected_last_date:
-             # Diese Warnung ist wichtig, sie zeigt an, dass wir nicht die Features vom Vortag haben
-             console.print(f"[yellow]   WARNUNG: Letzter Feature-Tag ({last_data_date}) != erwarteter Vortag ({expected_last_date}). Datenlücke oder Effekt von Feature Engineering? Versuche trotzdem Vorhersage.[/yellow]")
-             # NICHT ABBRECHEN HIER, WIR WOLLEN DEN DEBUG SEHEN
-             # Wenn hier abgebrochen wird, gibt es keine Features zum Debuggen
+        console.print(f"   Letzter Feature-Tag (Basis für Vorhersage): [cyan]{last_data_date}[/cyan].")
 
         # --- Features extrahieren ---
         features_cols = [col for col in data_featured.columns if col not in config.TARGET_COLUMNS + config.ORIGINAL_TARGET_BASE_COLUMNS]
@@ -83,28 +77,22 @@ def get_features_for_date(target_prediction_date: date):
             console.print(features_for_prediction.isnull().sum())
             return None, None
 
-        console.print(f"   Features basieren auf Daten vom [cyan]{last_data_date}[/cyan].")
         console.print("[green]   ✔️ Features für Vorhersage extrahiert.[/green]")
-        # Gibt die Features zurück, auch wenn das Datum nicht dem erwarteten Vortag entspricht
-        return features_for_prediction, features_cols
+        # WICHTIG: Wir geben hier auch das Datum der Features zurück
+        return features_for_prediction, features_cols, last_data_date
 
     except Exception as e:
         console.print(f"[red]   FEHLER beim Holen/Erstellen der Features: {e}[/red]")
         console.print_exception(show_locals=False)
-        return None, None
+        return None, None, None
 
 
 def run_prediction_and_save():
-    """Lädt Modelle, macht Vorhersage und speichert als JSON."""
+    """Lädt Modelle, macht Vorhersage für MORGEN basierend auf letzten Features und speichert als JSON."""
     console.rule("[bold blue]Starte tägliches Vorhersage-Update[/bold blue]")
-
-    # --- Heutiges Datum bestimmen ---
-    today_date = date.today() # Holt das aktuelle Datum des Servers (UTC)
-    console.print(f"Heutiges Datum (Basis für Feature-Abruf): [bold cyan]{today_date}[/bold cyan]")
 
     # --- Modelle laden ---
     console.print("\n[cyan]Lade Modelle...[/cyan]")
-    # Stelle sicher, dass die Dateinamen mit denen beim Speichern übereinstimmen
     rf_model_path = os.path.join(config.MODEL_SAVE_DIR, 'rf_model.joblib')
     xgb_model_path = os.path.join(config.MODEL_SAVE_DIR, 'xgb_model.joblib')
     rf_model = load_model(rf_model_path, console)
@@ -115,94 +103,51 @@ def run_prediction_and_save():
     console.print("[green]   ✔️ Modelle geladen.[/green]")
     models = {'rf': rf_model, 'xgb': xgb_model}
 
-    # --- Features holen (basierend auf Daten bis GESTERN) ---
-    console.print("\n[cyan]Hole Features basierend auf Daten bis gestern...[/cyan]")
-    features_for_prediction, features_cols = get_features_for_date(today_date)
+    # --- Neueste Features holen ---
+    console.print("\n[cyan]Hole neueste verfügbare Features...[/cyan]")
+    # Funktion gibt jetzt auch das Datum der Features zurück
+    features_for_prediction, features_cols, last_feature_date = get_latest_features_for_tomorrow()
     if features_for_prediction is None:
         console.print("[red]FEHLER: Features konnten nicht erstellt werden. Abbruch.[/red]")
         sys.exit(1)
 
-    # --- Bestimme das tatsächliche Datum der verwendeten Features ---
-    last_feature_date = features_for_prediction.index.max().date()
-
-    # ++++++++++++++++++++++++++++++++++++++++++++++++++++
-    # HIER IST DER DEBUG-CODE EINGEFÜGT:
-    # ++++++++++++++++++++++++++++++++++++++++++++++++++++
-    console.print("\n[bold yellow]-- DEBUG: Features für Vorhersage aus Action --[/bold yellow]")
-    # Das Datum, für das die Vorhersage gemacht wird (Tag nach den Features)
-    target_forecast_date = last_feature_date + timedelta(days=1)
-    console.print(f"Tatsächliches Vorhersagedatum (Action): {target_forecast_date}")
-    console.print(f"Datum der verwendeten Features (Action): {last_feature_date}")
-    console.print("Feature-Werte (Action):")
-    try:
-        # Zeige Werte als Dictionary für bessere Lesbarkeit
-        console.print(features_for_prediction.iloc[0].to_dict())
-    except Exception as e:
-        console.print(f"[red]Fehler beim Anzeigen der Feature-Werte: {e}[/red]")
-    console.print("[bold yellow]-------------------------------------------------[/bold yellow]\n")
-    # ++++++++++++++++++++++++++++++++++++++++++++++++++++
-    # ENDE DEBUG-CODE
-    # ++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-
     # --- Vorhersage machen ---
-    # Das Zieldatum der Vorhersage ist EIN Tag nach dem Datum der Features
-    actual_prediction_target_date = last_feature_date + timedelta(days=1)
-    console.print(f"\n[cyan]Mache Vorhersage für: [bold green]{actual_prediction_target_date}[/bold green][/cyan]")
+    # Das Zieldatum ist der Tag NACH dem Datum der Features
+    prediction_target_date = last_feature_date + timedelta(days=1)
+    console.print(f"\n[cyan]Mache Vorhersage für: [bold green]{prediction_target_date}[/bold green] (basierend auf Daten vom {last_feature_date})[/cyan]")
 
     predictions_output = {}
     target_cols = config.TARGET_COLUMNS
-    # --- Vorhersage-Schleife (wie in deiner letzten funktionierenden Version) ---
+    # --- Vorhersage-Schleife ---
     for model_name, model in models.items():
          console.print(f"--- Verarbeite Vorhersage für: [bold]{model_name}[/bold] ---")
          temp_processed: float | None = None
          wind_processed: float | None = None
          try:
-             # Verwende to_numpy() um sicherzustellen, dass es ein Array ist
              features_np = features_for_prediction.to_numpy()
-             # Prüfe auf korrekte Feature-Anzahl (optional, aber gut zum Debuggen)
-             expected_features = len(features_cols)
-             if features_np.shape[1] != expected_features:
-                 console.print(f"[bold red]FEHLER ({model_name}): Falsche Feature-Anzahl! Erwartet {expected_features}, bekommen {features_np.shape[1]}[/bold red]")
-                 raise ValueError("Falsche Feature-Anzahl")
-
              prediction = model.predict(features_np)
-
              if prediction.ndim == 1: prediction = prediction.reshape(1, -1)
-
-             # Indizes holen
              tavg_idx = target_cols.index('tavg_target') if 'tavg_target' in target_cols else -1
              wspd_idx = target_cols.index('wspd_target') if 'wspd_target' in target_cols else -1
-
-             # Rohwerte extrahieren
              temp_raw = prediction[0, tavg_idx] if tavg_idx != -1 and tavg_idx < prediction.shape[1] else None
              wind_raw = prediction[0, wspd_idx] if wspd_idx != -1 and wspd_idx < prediction.shape[1] else None
-
-             # Verarbeiten (NaN-Check und float-Konvertierung)
              if temp_raw is not None:
                  if isinstance(temp_raw, (float, np.floating)) and np.isnan(temp_raw): temp_processed = None
                  else: temp_processed = float(temp_raw)
              if wind_raw is not None:
                  if isinstance(wind_raw, (float, np.floating)) and np.isnan(wind_raw): wind_processed = None
                  else: wind_processed = float(wind_raw)
-
-             # Speichern
              predictions_output[model_name] = {'temp': temp_processed,'wspd': wind_processed}
              console.print(f"Verarbeitete Werte ({model_name}): temp={temp_processed}, wind={wind_processed}")
-
          except Exception as e:
              console.print(f"[bold red]   FEHLER bei Vorhersage mit {model_name}: {e}[/bold red]")
-             console.print_exception(show_locals=False) # Zeige Traceback für Fehler
              predictions_output[model_name] = {'temp': None, 'wspd': None}
 
     console.print("[green]   ✔️ Vorhersage-Loop abgeschlossen.[/green]")
 
     # --- Daten für JSON aufbereiten ---
-    json_forecast_date = last_feature_date + timedelta(days=1)
-    console.print(f"Setze 'forecast_date' im JSON auf: [bold green]{json_forecast_date}[/bold green]")
     output_data = {
-        # Verwende das tatsächliche Vorhersagedatum (Tag nach den Features)
-        "forecast_date": actual_prediction_target_date.strftime("%Y-%m-%d"),
+        "forecast_date": prediction_target_date.strftime("%Y-%m-%d"), # Tag nach den Features
         "rf_temp_c": predictions_output.get('rf', {}).get('temp'),
         "rf_wspd_kmh": predictions_output.get('rf', {}).get('wspd'),
         "xgb_temp_c": predictions_output.get('xgb', {}).get('temp'),
@@ -211,7 +156,6 @@ def run_prediction_and_save():
     }
     console.print("\n[bold]Finale Daten für JSON:[/bold]")
     console.print(output_data)
-
 
     # --- JSON Speichern ---
     json_filepath = "prediction.json"
@@ -222,25 +166,21 @@ def run_prediction_and_save():
         console.print(f"[green]   ✔️ Vorhersage erfolgreich in '{json_filepath}' gespeichert.[/green]")
     except Exception as e:
         console.print(f"[red]   FEHLER beim Speichern der JSON-Datei: {e}[/red]")
-        console.print_exception(show_locals=False) # Zeige Traceback
         sys.exit(1)
 
     console.rule("[bold blue]Update abgeschlossen[/bold blue]")
 
 
 if __name__ == "__main__":
-    # --- Modell-Verzeichnis-Check ---
+    # --- Modell-Verzeichnis-Check (bleibt gleich) ---
     if not hasattr(config, 'MODEL_SAVE_DIR') or not os.path.isdir(config.MODEL_SAVE_DIR):
          script_dir = os.path.dirname(__file__)
-         # Gehe eine Ebene höher von 'src' zu 'meteoflow' und dann in 'saved_models'
          potential_model_dir = os.path.abspath(os.path.join(script_dir, '..', 'saved_models'))
          if os.path.isdir(potential_model_dir):
-             # WICHTIG: Weise den korrekten Pfad config zu, falls er nicht existiert
              config.MODEL_SAVE_DIR = potential_model_dir
              console.print(f"[yellow]Nutze gefundenen Modellordner: {config.MODEL_SAVE_DIR}[/yellow]")
          else:
-             # Versuche absoluten Pfad, falls konfiguriert aber nicht gefunden
-             abs_model_dir = getattr(config, 'MODEL_SAVE_DIR', 'saved_models') # Default, falls nicht gesetzt
+             abs_model_dir = getattr(config, 'MODEL_SAVE_DIR', 'saved_models')
              console.print(f"[red]FEHLER: Modell-Verzeichnis nicht gefunden. Erwartet unter '{abs_model_dir}' oder relativ als '../saved_models'[/red]")
              sys.exit(1)
 

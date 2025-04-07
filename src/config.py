@@ -61,13 +61,6 @@ LGBM = {
     'max_depth': 7
 }
 
-# ARIMA
-DEFAULT_ARIMA_ORDER = (5, 1, 0)
-
-# SARIMA
-DEFAULT_ORDER = (2, 0, 1) 
-DEFAULT_SEASONAL_ORDER = (0, 1, 1, 12)
-
 # ----- Plotting -----
 EDA_PLOT_COLUMNS = ['tavg', 'wspd', 'prcp', 'pres'] # Spalten für Zeitreihenplots
 EVAL_PLOT_TARGET_COLUMN = 'tavg_target' # Zielspalte für Evaluierungsplots

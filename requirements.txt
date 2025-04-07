@@ -10,3 +10,4 @@ pytz==2025.2
 tzdata==2025.2
 python-dateutil==2.9.0.post0
 rich==14.0.0
+statsmodels==0.14.4

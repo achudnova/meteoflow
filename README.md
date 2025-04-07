@@ -60,3 +60,9 @@ Returns:
 
 > Wie genau sind die Vorhersagen im Vergleich zur Realität, wenn das Modell auf Daten trifft, die es noch nie gesehen hat?"
 
+### ARIMA
+
+> AutoRegressive Integrated Moving Average
+
+- ist ein klassischer statistischer Ansatz für Zeitreihenvorhersagen
+- Im Gegensatz zu Modellen wie RandomForest oder XGBoost, die viele Features nutzen können (multivariat), ist ARIMA primär univariat => d.h. es betrachtet hauptsächlich die historischen Werte der Zielvariable selbst, um zukünftige Werte vorherzusagen.

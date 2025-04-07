@@ -11,6 +11,7 @@ from data_splitting import split_data
 from model_training import train_models
 from model_evaluation import evaluate_model
 from prediction import predict_next_day
+from arima_pipeline import evaluate_arima_on_test_set, predict_next_day_arima
 # from .model_manager import load_model
 
 from rich.console import Console
@@ -80,6 +81,19 @@ def main():
         config.XGB_PARAMETER,
         config.MODEL_SAVE_DIR,
     )
+    
+    console.rule("[cyan]5.5 ARIMA Evaluierung[/cyan]")
+    all_arima_results = {}
+    for target_col in target_cols_present:
+         metrics, _ = evaluate_arima_on_test_set( # Vorhersagen werden nicht direkt gebraucht
+             y_train=y_train[target_col],
+             y_test=y_test[target_col],
+             target_col_name=target_col,
+             order=config.DEFAULT_ARIMA_ORDER, 
+             console=console,
+             save_dir=config.EDA_PLOT_DIR 
+         )
+         all_arima_results[target_col] = metrics
 
     # ----- 7. Modellbewertung -----
     console.rule("[orange1]6. Modellbewertung[/orange1]")
@@ -108,7 +122,32 @@ def main():
         features_cols=features_cols,  # Die Liste der Feature-Namen
         target_cols=target_cols_present,  # Die Liste der Ziel-Namen
     )
+    
+    console.rule("[cyan]7.5 ARIMA Vorhersage für nächsten Tag[/cyan]")
+    arima_next_day_predictions = {}
+    next_day_date = y_test.index.max() + pd.Timedelta(days=1)
+    panel_content = ""
+    
+    for target_col in target_cols_present:
+        # Baue die gesamte Historie für das finale Training
+        full_history = pd.concat([y_train[target_col], y_test[target_col]])
+        pred_value = predict_next_day_arima(
+            y_full_history=full_history,
+            target_col_name=target_col,
+            order=config.DEFAULT_ARIMA_ORDER, # Verwende Default oder aus Config
+            console=console
+        )
+        arima_next_day_predictions[target_col] = pred_value
 
+        # Füge zum Panel-Inhalt hinzu
+        label = "Temperatur" if "tavg" in target_col else "Windgeschw."
+        unit = "°C" if "tavg" in target_col else "km/h"
+        style = "yellow" if "tavg" in target_col else "cyan"
+        panel_content += f"  Vorhergesagte {label}: [bold {style}]{pred_value:.1f}{unit}[/bold {style}]\n" if pred_value is not None else f"  {label}-Vorhersage: N/A\n"
+
+    # Gib das Panel aus
+    console.print(Panel(panel_content.strip(), title=f"ARIMA Vorhersage für {next_day_date.date()}", border_style="magenta", expand=False, padding=(1, 2)))
+    
     console.print("\n[bold blue]🎉 Wettervorhersage Workflow Abgeschlossen 🎉[/bold blue]")
 
 

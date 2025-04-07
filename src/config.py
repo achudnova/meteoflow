@@ -3,6 +3,11 @@ from meteostat import Point
 import os
 
 # ----- Standort: Berlin -----
+TARGET_LAT = 52.5200
+TARGET_LON = 13.4050
+SEARCH_RADIUS_KM = 30
+MAX_NEARBY_STATIONS = 4
+
 LATITUDE = 52.5200
 LONGITUDE = 13.4050
 ALTITUDE = 34 # Höhe in Metern 
@@ -48,7 +53,7 @@ XGB_PARAMETER = {
     'random_state': RANDOM_STATE,
     'n_jobs': 1,
     'learning_rate': 0.01,
-    'max_depth': 5
+    'max_depth': 3
 }
 
 # TODO: LightGBM

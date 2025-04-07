@@ -9,7 +9,7 @@ from data_preprocessing import preprocess_data
 from feature_engineering import engineer_features
 from data_splitting import split_data
 from model_training import train_models
-from model_evaluation import evaluate_model
+from model_evaluation import evaluate_model, create_temperature_time_series
 from prediction import predict_next_day
 
 from rich.console import Console
@@ -89,6 +89,28 @@ def main():
         target_cols=target_cols_present,
         save_dir=config.EDA_PLOT_DIR
     )
+    console.rule("[orange1]6.5 Temperatur-Zeitreihe erstellen[/orange1]")
+    # Finde den Index der Temperaturspalte
+    temp_target_idx = -1
+    for i, col in enumerate(target_cols_present):
+        if "tavg" in col:
+            temp_target_idx = i
+            break
+    
+    if temp_target_idx != -1:
+        console.print("[green]Erstelle Temperatur-Zeitreihe...[/green]")
+        create_temperature_time_series(
+            X_train=X_train,
+            y_train=y_train,
+            X_test=X_test,
+            y_test=y_test,
+            models=trained_models,
+            target_col_idx=temp_target_idx,
+            target_cols=target_cols_present,
+            save_dir=config.EDA_PLOT_DIR
+        )
+    else:
+        console.print("[yellow]Keine Temperaturspalte gefunden. Überspringe Temperatur-Zeitreihe.[/yellow]")
 
     # ----- 8. Vorhersage für den nächsten Tag -----
     console.rule("[reverse green]7. Vorhersage für den nächsten Tag[/reverse green]")

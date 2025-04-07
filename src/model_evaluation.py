@@ -110,3 +110,98 @@ def evaluate_model(
         results[model_name] = metrics  # Speichere Metriken für das Modell
 
     print("Modellbewertung abgeschlossen.")
+
+def create_temperature_time_series(
+    X_train: pd.DataFrame,
+    y_train: pd.DataFrame,
+    X_test: pd.DataFrame,
+    y_test: pd.DataFrame,
+    models: dict,
+    target_col_idx: int,
+    target_cols: list,
+    save_dir: str,
+):
+    """
+    Erstellt eine Zeitreihen-Grafik der Durchschnittstemperatur mit drei Farben:
+    - Schwarz für Trainingsdaten
+    - Blau für Testdaten
+    - Rot für Vorhersagen
+    
+    Args:
+        X_train: Trainings-Features
+        y_train: Trainings-Targets
+        X_test: Test-Features
+        y_test: Test-Targets
+        models: Dictionary mit trainierten Modellen
+        target_col_idx: Index der Zielspalte (Temperatur) in den Target-Arrays
+        target_cols: Liste der Zielspalten-Namen
+        save_dir: Verzeichnis zum Speichern der Plots
+    """
+    if target_col_idx >= len(target_cols):
+        print(f"FEHLER: Ungültiger Target-Index {target_col_idx} für {target_cols}")
+        return
+    
+    target_col = target_cols[target_col_idx]
+    if "tavg" not in target_col and "tmin" not in target_col and "tmax" not in target_col:
+        print(f"WARNUNG: Die ausgewählte Zielspalte '{target_col}' scheint keine Temperaturspalte zu sein.")
+    
+    # Extrahiere die tatsächlichen Werte
+    y_train_values = y_train.iloc[:, target_col_idx]
+    y_test_values = y_test.iloc[:, target_col_idx]
+    
+    for model_name, model in models.items():
+        try:
+            # Vorhersagen für Testdaten
+            y_pred_test = model.predict(X_test)
+            if y_pred_test.ndim == 1:
+                y_pred_test = y_pred_test.reshape(-1, 1)
+            
+            # Vorhersagen für Trainingsdaten (für Vergleichszwecke)
+            y_pred_train = model.predict(X_train)
+            if y_pred_train.ndim == 1:
+                y_pred_train = y_pred_train.reshape(-1, 1)
+            
+            # Erstelle den Plot
+            plt.figure(figsize=(15, 8))
+            
+            # Trainingsdaten (schwarz)
+            plt.plot(
+                y_train.index, 
+                y_train_values, 
+                'k-', 
+                label='Trainingsdaten', 
+                alpha=0.7
+            )
+            
+            # Testdaten (blau)
+            plt.plot(
+                y_test.index, 
+                y_test_values, 
+                'b-', 
+                label='Testdaten', 
+                alpha=0.7
+            )
+            
+            # Vorhersagen (rot)
+            plt.plot(
+                y_test.index, 
+                y_pred_test[:, target_col_idx], 
+                'r-', 
+                label=f'{model_name} Vorhersage', 
+                alpha=0.9
+            )
+            
+            # Beschriftungen und Layout
+            plt.title(f'Durchschnittstemperatur Zeitreihe: {model_name} - {target_col}')
+            plt.xlabel('Zeit')
+            plt.ylabel('Temperatur (°C)')
+            plt.legend()
+            plt.grid(True, linestyle='--', alpha=0.6)
+            plt.tight_layout()
+            
+            # Speichern des Plots
+            filename = f"temperature_time_series_{model_name}_{target_col}.png"
+            save_plot(filename, save_dir)
+        except Exception as e:
+            print(f"FEHLER beim Erstellen/Speichern des Plots für {model_name} - {target_col}: {e}")
+            plt.close("all")

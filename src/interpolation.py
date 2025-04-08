@@ -5,10 +5,8 @@ from tqdm import tqdm
 from meteostat import Stations
 import sys
 
-# ... (Import für Distanzfunktion) ...
+
 from geo_utils import haversine_distance
-# ODER
-# from haversine import haversine
 
 import config
 

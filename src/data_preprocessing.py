@@ -1,6 +1,8 @@
 import pandas as pd
+import numpy as np
+from rich.console import Console
 
-def preprocess_data(data: pd.DataFrame) -> pd.DataFrame:
+def preprocess_data(data: pd.DataFrame, console: Console) -> pd.DataFrame:
     print("Überpüfung auf fehlende Werte (vor Imputation)")
     print(data.isnull().sum())
     

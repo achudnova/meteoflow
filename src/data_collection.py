@@ -5,7 +5,6 @@ from config import TARGET_LAT, TARGET_LON, SEARCH_RADIUS_KM, MAX_NEARBY_STATIONS
 from rich.console import Console
 
 
-
 def find_stations(console: Console) -> list:
     print(
         f"Suche nach Wetterstationen im Umkreis von {SEARCH_RADIUS_KM} km um Berlin..."

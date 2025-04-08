@@ -1,11 +1,14 @@
 import seaborn as sns
 import matplotlib.pyplot as plt
 import pandas as pd
+import numpy as np
 import os
+from rich.table import Table 
+from rich.console import Console
 
 from plot_manager import save_plot
 
-def start_eda(data: pd.DataFrame, plot_columns: list, save_dir: str):
+def start_eda(data: pd.DataFrame, plot_columns: list, save_dir: str, console: Console):
     if data.empty:
         print("DataFrame ist leer. EDA kann nicht durchgeführt werden.")
         return
@@ -42,6 +45,46 @@ def start_eda(data: pd.DataFrame, plot_columns: list, save_dir: str):
 
     # TODO: Überprüfen auf Ausreißer
     print("\nÜberprüfung auf Ausreißer:")
+    console.print("\n[cyan]Quantifizierung potenzieller Ausreißer (IQR-Methode)[/cyan]")
+    outlier_table = Table(title="Potenzielle Ausreißer pro Variable (IQR * 1.5)")
+    outlier_table.add_column("Variable", style="dim", width=12)
+    outlier_table.add_column("Anzahl Ausreißer", justify="right")
+    outlier_table.add_column("% Ausreißer", justify="right")
+    outlier_table.add_column("Untere Grenze", justify="right")
+    outlier_table.add_column("Obere Grenze", justify="right")
+
+    total_rows = len(data)
+    numeric_cols = data.select_dtypes(include=np.number).columns
+
+    if total_rows > 0:
+        for col in numeric_cols:
+            Q1 = data[col].quantile(0.25)
+            Q3 = data[col].quantile(0.75)
+            IQR = Q3 - Q1
+            lower_bound = Q1 - 1.5 * IQR
+            upper_bound = Q3 + 1.5 * IQR
+
+            # Finde Ausreißer
+            outliers = data[(data[col] < lower_bound) | (data[col] > upper_bound)]
+            num_outliers = len(outliers)
+            percentage_outliers = (num_outliers / total_rows) * 100
+
+            # Füge zur Tabelle hinzu, nur wenn Ausreißer gefunden wurden
+            if num_outliers > 0:
+                 outlier_table.add_row(
+                     col,
+                     str(num_outliers),
+                     f"{percentage_outliers:.2f}%",
+                     f"{lower_bound:.2f}",
+                     f"{upper_bound:.2f}"
+                 )
+
+        if outlier_table.row_count > 0:
+            console.print(outlier_table)
+        else:
+             console.print("   Keine potenziellen Ausreißer nach der IQR-Methode gefunden.")
+    else:
+         console.print("   Keine Daten zur Ausreißeranalyse vorhanden.")
 
     # Visualisierung der fehlenden Werte
     if data.isnull().sum().sum() > 0:

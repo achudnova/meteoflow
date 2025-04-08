@@ -97,7 +97,7 @@ def main():
     
     # ----- 2. Explorative Datenanalyse (EDA) -----
     console.rule("[orange1]1.5 Explorative Datenanalyse (EDA)[/orange1]")
-    start_eda(berlin_interpolated_df, plot_columns=config.EDA_PLOT_COLUMNS, save_dir=config.EDA_PLOT_DIR)
+    start_eda(berlin_interpolated_df, plot_columns=config.EDA_PLOT_COLUMNS, save_dir=config.EDA_PLOT_DIR, console=console)
 
     # ----- 3. Datenvorverarbeitung -----
     console.rule("[orange1]2. Datenvorverarbeitung[/orange1]")

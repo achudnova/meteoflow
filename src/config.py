@@ -29,17 +29,17 @@ ESSENTIAL_COLS = ['tavg', 'wspd']
 # ----- Feature Engineering -----
 TARGET_COLUMNS = ['tavg_target', 'wspd_target']
 ORIGINAL_TARGET_BASE_COLUMNS = ['tavg', 'wspd'] # Originalspalten, die zu Targets werden
-LAG_DAYS = 3 # Anzahl der Lag-Tage
+LAG_DAYS = 4 # Anzahl der Lag-Tage
 
 # ----- Train/Test Daten -----
-TEST_PERIOD_DAYS = 3 * 365 # Tage für den Testdatensatz
+TEST_PERIOD_DAYS = 2 * 365 # Tage für den Testdatensatz
 
 # ----- Modellparameter -----
 RANDOM_STATE = 42
 
 # Random Forest
 RF_PARAMETER = {
-    'n_estimators': 100,
+    'n_estimators': 1000,
     'random_state': RANDOM_STATE,
     'n_jobs': 1,
     'max_depth': 15,
@@ -52,19 +52,19 @@ XGB_PARAMETER = {
     'n_estimators': 1000,
     'random_state': RANDOM_STATE,
     'n_jobs': 1,
-    'learning_rate': 0.01,
+    'learning_rate': 0.03,
     'max_depth': 3
 }
 
 # TODO: LightGBM
-LGBM = {
-    'objective': 'regression',
-    'n_estimators': 100,
-    'random_state': RANDOM_STATE,
-    'n_jobs': 1,
-    'learning_rate': 0.1,
-    'max_depth': 7
-}
+# LGBM = {
+#     'objective': 'regression',
+#     'n_estimators': 100,
+#     'random_state': RANDOM_STATE,
+#     'n_jobs': 1,
+#     'learning_rate': 0.1,
+#     'max_depth': 7
+# }
 
 # ----- Plotting -----
 EDA_PLOT_COLUMNS = ['tavg', 'wspd', 'prcp', 'pres'] # Spalten für Zeitreihenplots

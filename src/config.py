@@ -39,7 +39,7 @@ RANDOM_STATE = 42
 
 # Random Forest
 RF_PARAMETER = {
-    'n_estimators': 1000,
+    'n_estimators': 100,
     'random_state': RANDOM_STATE,
     'n_jobs': 1,
     'max_depth': 15,

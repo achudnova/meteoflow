@@ -101,7 +101,7 @@ def main():
 
     # ----- 3. Datenvorverarbeitung -----
     console.rule("[orange1]2. Datenvorverarbeitung[/orange1]")
-    data_processed = preprocess_data(berlin_interpolated_df)
+    data_processed = preprocess_data(berlin_interpolated_df, console)
     if data_processed is None: sys.exit(1)
 
     # ----- 4. Feature Engineering -----

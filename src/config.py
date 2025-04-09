@@ -15,7 +15,7 @@ LOCATION = Point(LATITUDE, LONGITUDE, ALTITUDE)
 
 # ----- Zeitraum für historische Wetterdaten -----
 END_DATE = datetime.now()
-START_DATE = END_DATE - timedelta(10*365 + 5)  # 10 Jahre + 5 Tage Puffer
+START_DATE = END_DATE - timedelta(20*365 + 5)  # 20 Jahre + 5 Tage Puffer
 
 # ----- Spaltenauswahl -----
 # diese Spalten sind für die Analyse erforderlich
@@ -29,10 +29,10 @@ ESSENTIAL_COLS = ['tavg', 'wspd']
 # ----- Feature Engineering -----
 TARGET_COLUMNS = ['tavg_target', 'wspd_target']
 ORIGINAL_TARGET_BASE_COLUMNS = ['tavg', 'wspd'] # Originalspalten, die zu Targets werden
-LAG_DAYS = 4 # Anzahl der Lag-Tage
+LAG_DAYS = 5 # Anzahl der Lag-Tage
 
 # ----- Train/Test Daten -----
-TEST_PERIOD_DAYS = 2 * 365 # Tage für den Testdatensatz
+TEST_PERIOD_DAYS = 4 * 365 # Tage für den Testdatensatz
 
 # ----- Modellparameter -----
 RANDOM_STATE = 42

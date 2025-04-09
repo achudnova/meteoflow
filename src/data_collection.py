@@ -12,9 +12,7 @@ def find_stations(console: Console) -> list:
     stations = Stations()
 
     try:
-        nearby_stations_df = stations.nearby(
-            TARGET_LAT, TARGET_LON, SEARCH_RADIUS_KM * 1000
-        )
+        nearby_stations_df = stations.nearby(TARGET_LAT, TARGET_LON, SEARCH_RADIUS_KM * 1000)
         nearby_stations_df = nearby_stations_df.fetch(limit=MAX_NEARBY_STATIONS * 2)
 
         if nearby_stations_df.empty:

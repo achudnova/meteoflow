@@ -32,7 +32,6 @@ def main():
              sys.exit(1)
 
         # Lade Daten für diese Stationen
-        # WICHTIG: Definiere Start/Ende für den historischen Abruf
         # Wir verwenden die Config-Werte wie zuvor für den langen Zeitraum
         end_dt_hist = config.END_DATE # datetime Objekt
         start_dt_hist = config.START_DATE # datetime Objekt
@@ -96,16 +95,16 @@ def main():
 
     
     # ----- 2. Explorative Datenanalyse (EDA) -----
-    console.rule("[orange1]1.5 Explorative Datenanalyse (EDA)[/orange1]")
+    console.rule("[orange1]2. Explorative Datenanalyse (EDA)[/orange1]")
     start_eda(berlin_interpolated_df, plot_columns=config.EDA_PLOT_COLUMNS, save_dir=config.EDA_PLOT_DIR, console=console)
 
     # ----- 3. Datenvorverarbeitung -----
-    console.rule("[orange1]2. Datenvorverarbeitung[/orange1]")
+    console.rule("[orange1]3. Datenvorverarbeitung[/orange1]")
     data_processed = preprocess_data(berlin_interpolated_df, console)
     if data_processed is None: sys.exit(1)
 
     # ----- 4. Feature Engineering -----
-    console.rule("[orange1]3. Feature Engineering[/orange1]")
+    console.rule("[orange1]4. Feature Engineering[/orange1]")
     data_featured = engineer_features(
         data=data_processed,
         target_cols=config.TARGET_COLUMNS,
@@ -118,7 +117,7 @@ def main():
         sys.exit(1)
 
     # ----- 5. Train/Test Split -----
-    console.rule("[orange1]4. Train/Test Split[/orange1]")
+    console.rule("[orange1]5. Train/Test Split[/orange1]")
     try:
         X_train, X_test, y_train, y_test, features_cols, target_cols_present, split_date, train_percentage, test_percentage = split_data(
             data_featured, console
@@ -130,7 +129,7 @@ def main():
 
 
     # ----- 6. Modelltraining -----
-    console.rule("[orange1]5. Modelltraining[/orange1]")
+    console.rule("[orange1]6. Modelltraining[/orange1]")
     trained_models = train_models(
         X_train,
         y_train,
@@ -140,7 +139,7 @@ def main():
     )
 
     # ----- 7. Modellbewertung -----
-    console.rule("[orange1]6. Modellbewertung[/orange1]")
+    console.rule("[orange1]7. Modellbewertung[/orange1]")
     evaluate_model(
         models=trained_models,
         X_test=X_test,
@@ -148,7 +147,9 @@ def main():
         target_cols=target_cols_present,
         save_dir=config.EDA_PLOT_DIR
     )
-    console.rule("[orange1]6.5 Temperatur-Zeitreihe erstellen[/orange1]")
+    
+    
+    console.rule("[orange1]Temperatur-Zeitreihe erstellen[/orange1]")
     # Finde den Index der Temperaturspalte
     temp_target_idx = -1
     for i, col in enumerate(target_cols_present):
@@ -172,7 +173,7 @@ def main():
         console.print("[yellow]Keine Temperaturspalte gefunden. Überspringe Temperatur-Zeitreihe.[/yellow]")
 
     # ----- 8. Vorhersage für den nächsten Tag -----
-    console.rule("[reverse green]7. Vorhersage für den nächsten Tag[/reverse green]")
+    console.rule("[reverse green]8. Vorhersage für den nächsten Tag[/reverse green]")
     last_available_data_row = data_featured.iloc[-1:]
     
     console.print("\n[bold yellow]--- DEBUG: Features für Vorhersage aus main.py ---[/bold yellow]")

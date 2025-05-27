@@ -34,7 +34,7 @@ def find_stations(console: Console) -> list:
         final_station_ids = relevant_stations.sort_values('distance').head(MAX_NEARBY_STATIONS).index.tolist()
 
         console.print(f"   Gefundene relevante Stations-IDs (bis zu {MAX_NEARBY_STATIONS}): [magenta]{final_station_ids}[/magenta]")
-        console.print("   Details der Top Stationen:")
+        console.print("   Details der Stationen:")
         console.print(relevant_stations.sort_values('distance').head(MAX_NEARBY_STATIONS)[['name', 'country', 'distance']])
         
         return final_station_ids

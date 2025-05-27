@@ -39,11 +39,11 @@ RANDOM_STATE = 42
 
 # Random Forest
 RF_PARAMETER = {
-    'n_estimators': 100,
-    'random_state': RANDOM_STATE,
-    'n_jobs': 1,
-    'max_depth': 15,
-    'min_samples_split': 5
+    'n_estimators': 100, # Anzahl der Bäume
+    'random_state': RANDOM_STATE, # Zufallszahlengenerator - Auswahl der Features für jeden Split gleich
+    'n_jobs': 1, # wie viele Kerne genutzt werden sollen
+    'max_depth': 15, # maximale Tiefe der Bäume
+    'min_samples_split': 5 # minimale Anzahl Samples, um einen Split zu machen
 }
 
 # XGBoost

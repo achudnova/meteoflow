@@ -3,7 +3,7 @@ import sys
 import config
 from rich.console import Console
 
-
+# Datenaufteilung
 def split_data(data_featured: pd.DataFrame, console: Console):
     print("Definiere Feature- und Zielspalten...")
 
@@ -73,7 +73,19 @@ def split_data(data_featured: pd.DataFrame, console: Console):
     console.print(f"     Trainings-Anteil: [bold magenta]{train_percentage:.2f}%[/bold magenta]")
     console.print(f"     Test-Anteil:      [bold magenta]{test_percentage:.2f}%[/bold magenta]")
     console.print("[green]   ✔️ Train/Test Split abgeschlossen.[/green]")
+    
+    console.print("\n[bold yellow]Trainingsdaten (erste 3 und letzte 3 Zeilen):[/bold yellow]")
+    with pd.option_context('display.max_columns', 13, 'display.width', 1000):
+        print(X_train.join(y_train).head(3))
+        print("...")
+        print(X_train.join(y_train).tail(3))
 
+    console.print("\n[bold yellow]Testdaten (erste 3 und letzte 3 Zeilen):[/bold yellow]")
+    with pd.option_context('display.max_columns', 13, 'display.width', 1000):
+        print(X_test.join(y_test).head(3))
+        print("...")
+        print(X_test.join(y_test).tail(3))
+    
     return (
         X_train,
         X_test,

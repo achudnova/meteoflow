@@ -21,7 +21,7 @@ This project implements an end-to-end ML pipeline:
 8. Prediction
 
 <p align="center">
-  <img src="pics/ml-flow.png" alt="Machine Learning Workflow" width="800"/>
+  <img src="pics/ml-flow.png" alt="Machine Learning Workflow" width="700"/>
 </p>
 
 
@@ -32,7 +32,7 @@ This project implements an end-to-end ML pipeline:
 -   **Scikit-learn** for machine learning models and metrics
 -   **XGBoost** for the gradient boosting model
 -   **Matplotlib / Seaborn** for data visualization
--   **Click / Argparse** for the CL
+-   **Click / Argparse** for the CLI
 
 ## Installation
 

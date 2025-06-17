@@ -2,7 +2,7 @@
 
 <table>
   <tr>
-    <td valign="top"><img src="pics/logo.png" alt="MeteoFlow Logo" width="200"/></td>
+    <td valign="top"><img src="pics/meteoflow-logo.png" alt="MeteoFlow Logo" width="200"/></td>
     <td valign="top">MeteoFlow is a machine learning-based weather forecasting CLI application that predicts average temperature and wind speed for Berlin. This project implements an end-to-end ML pipeline, from data collection and processing to model training and prediction.</td>
   </tr>
 </table>

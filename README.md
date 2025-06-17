@@ -6,21 +6,22 @@
 
 MeteoFlow is a machine learning-based weather forecasting CLI application that predicts average temperature and wind speed for Berlin.
 
-This project implements an end-to-end ML pipeline:
 
 ## Key Features / Workflow
 
-- Automated Data Collection
-- Spatial Intepolation (IDW)
-- Exploratory Data Analysis with visualizations
-- Data Preprocessing
-- Feature Engineering with time-based features and lag variables
-- Model training: RandomForest and XGBoost
-- Evaluation: assesses model performance using standard regression metrics (MAE, RMSE, R²)
-- Prediction
+This project implements an end-to-end ML pipeline:
+
+1. Automated Data Collection
+2. Spatial Intepolation (IDW)
+3. Exploratory Data Analysis with visualizations
+4. Data Preprocessing
+5. Feature Engineering with time-based features and lag variables
+6. Model training: RandomForest and XGBoost
+7. Evaluation: assesses model performance using standard regression metrics (MAE, RMSE, R²)
+8. Prediction
 
 <p align="center">
-  <img src="pics/ml-flow.png" alt="Machine Learning Workflow" width="400"/>
+  <img src="pics/ml-flow.png" alt="Machine Learning Workflow" width="800"/>
 </p>
 
 

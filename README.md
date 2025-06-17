@@ -1,8 +1,11 @@
 # METEOFLOW
 
-<p align="center">
-  <img src="pics/meteoflow_logo.png" alt="MeteoFlow Logo" width="200"/>
-</p>
+<table>
+  <tr>
+    <td valign="top"><img src="pics/logo.png" alt="MeteoFlow Logo" width="200"/></td>
+    <td valign="top">MeteoFlow is a machine learning-based weather forecasting CLI application that predicts average temperature and wind speed for Berlin. This project implements an end-to-end ML pipeline, from data collection and processing to model training and prediction.</td>
+  </tr>
+</table>
 
 MeteoFlow is a machine learning-based weather forecasting CLI application that predicts average temperature and wind speed for Berlin.
 
@@ -20,7 +23,7 @@ This project implements an end-to-end ML pipeline:
 - Prediction
 
 <p align="center">
-  <img src="pics/ml.png" alt="Machine Learning Workflow"/>
+  <img src="pics/ml-flow.png" alt="Machine Learning Workflow"/>
 </p>
 
 

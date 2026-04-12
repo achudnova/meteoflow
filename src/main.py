@@ -195,4 +195,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    from helper_modules.output_capture import OutputCapture
+
+    with OutputCapture("output.md"):
+        main()
